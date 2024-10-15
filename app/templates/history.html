@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}History - University of Michigan Teaching Calculation Platform{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Calculation History</h1>
+
+{% if histories %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Input</th>
+                <th>Output</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for history in histories %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ history.input }}</td>
+                <td>{{ history.output }}</td>
+                <td>{{ history.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No history found.</p>
+{% endif %}
+{% endblock %}

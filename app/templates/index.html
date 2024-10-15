@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to UMTC Platform{% endblock %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1>Welcome to UMTC Platform</h1>
+    <p class="lead">Please log in or register to access the application.</p>
+    {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+    {% else %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">Login</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-secondary btn-lg">Register</a>
+    {% endif %}
+</div>
+{% endblock %}
