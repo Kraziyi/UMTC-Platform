@@ -28,3 +28,7 @@ class RegistrationForm(FlaskForm):
                 raise ValidationError('Password must be at least 6 characters long.')
             if not re.search(r'[A-Za-z]', password) or not re.search(r'[0-9]', password):
                 raise ValidationError('Password must contain both letters and numbers.')
+            
+class AdminRegistrationForm(FlaskForm):
+    verification_code = StringField('Verification Code', validators=[DataRequired()])
+    submit = SubmitField('Become Admin')

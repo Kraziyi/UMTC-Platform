@@ -1,6 +1,9 @@
 from flask import Blueprint, render_template, flash, redirect, url_for
 from flask_login import login_required, current_user
-from app.models import User, History
+from datetime import datetime, timezone
+from app import db
+from app.models import History
+from app.forms import CalculationForm
 
 
 main = Blueprint('main', __name__)
@@ -22,11 +25,29 @@ def history():
     histories = History.query.order_by(History.timestamp.desc()).all()
     return render_template('history.html', histories=histories)
 
-@main.route('/admin')
+@main.route('/calculation', methods=['GET', 'POST'])
 @login_required
-def admin():
-    if not current_user.is_admin:
-        flash('You do not have permission to access the admin page.')
-        return redirect(url_for('main.index'))
-    users = User.query.all()
-    return render_template('admin.html', users=users)
+def calculation():
+    form = CalculationForm()
+    result = None
+
+    # TODO: Implement the real calculation logic here
+    if form.validate_on_submit():
+        x = form.x.data
+        y = form.y.data
+        z = form.z.data
+        
+        result = x * y * z
+
+        history_entry = History(
+            user_id=current_user.id,
+            input=f'x={x}, y={y}, z={z}',
+            output=f'Result={result}',
+            timestamp=datetime.now(timezone.utc)
+        )
+        db.session.add(history_entry)
+        db.session.commit()
+
+        flash(f'Calculation completed: {result}')
+
+    return render_template('calculation.html', form=form, result=result)

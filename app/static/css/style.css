@@ -1,0 +1,28 @@
+.custom-radio-box {
+    margin: 10px; /* Box之间的间距 */
+    flex: 1; /* 使得每个Box均分空间 */
+    max-width: 150px; /* 限制最大宽度以保持一致性 */
+}
+
+.radio-box-content {
+    border: 2px solid #007bff; /* 边框颜色 */
+    border-radius: 8px; /* 圆角 */
+    padding: 20px; /* 内边距 */
+    background-color: #f8f9fa; /* 背景颜色 */
+    transition: background-color 0.3s ease, border-color 0.3s ease; /* 背景和边框颜色的过渡效果 */
+}
+
+.radio-box-content:hover {
+    background-color: #e9ecef; /* Hover效果 */
+    cursor: pointer; /* 鼠标悬停时的光标 */
+}
+
+.form-check-input:checked + label .radio-box-content {
+    background-color: #007bff; /* 选中时背景颜色 */
+    color: white; /* 选中时字体颜色 */
+    border-color: #0056b3; /* 选中时边框颜色 */
+}
+
+h3 {
+    margin: 0; /* h3元素的外边距设置为0，避免间距不一致 */
+}

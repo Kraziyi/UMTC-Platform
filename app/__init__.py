@@ -18,8 +18,9 @@ def create_app():
 
     app.permanent_session_lifetime = Config.REMEMBER_COOKIE_DURATION
 
-    from app.routes import main, auth
+    from app.routes import main, auth, admin
     app.register_blueprint(main)
     app.register_blueprint(auth)
+    app.register_blueprint(admin, url_prefix='/admin')
 
     return app

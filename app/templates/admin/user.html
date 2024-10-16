@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}User Details{% endblock %}
+
+{% block content %}
+<h1>User: {{ user.username }}</h1>
+<p>Email: {{ user.email }}</p>
+<p>Admin: {{ 'Yes' if user.is_admin else 'No' }}</p>
+
+<h2>History</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Input</th>
+            <th>Output</th>
+            <th>Timestamp</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in history %}
+        <tr>
+            <td>{{ entry.input }}</td>
+            <td>{{ entry.output }}</td>
+            <td>{{ entry.timestamp }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

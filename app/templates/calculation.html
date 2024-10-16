@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Calculation - University of Michigan Teaching Calculation Platform{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Calculation</h1>
+
+<form method="POST" id="calculation-form">
+    {{ form.hidden_tag() }}
+    
+    <div class="form-group mb-3">
+        {{ form.x.label }}
+        {{ form.x(class="form-control") }}
+        {% if form.x.errors %}
+            <div class="text-danger">{{ form.x.errors[0] }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group mb-3">
+        {{ form.y.label }}
+        {{ form.y(class="form-control") }}
+        {% if form.y.errors %}
+            <div class="text-danger">{{ form.y.errors[0] }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-group mb-3">
+        {{ form.z.label }}
+        {{ form.z(class="form-control") }}
+        {% if form.z.errors %}
+            <div class="text-danger">{{ form.z.errors[0] }}</div>
+        {% endif %}
+    </div>
+
+    {{ form.submit(class="btn btn-primary") }}
+</form>
+
+{% if result is not none %}
+    <h2 class="mt-4">Result: {{ result }}</h2>
+{% endif %}
+
+{% endblock %}
