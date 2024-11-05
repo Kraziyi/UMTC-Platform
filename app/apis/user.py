@@ -139,11 +139,14 @@ def unauthorized():
 def get_username():
     return jsonify({"username": current_user.username}), 200
 
-from flask import session
+@user.route('info/current', methods=['GET'])
+@login_required
+def get_user_info():
+    return jsonify({
+        "username": current_user.username,
+        "email": current_user.email,
+        "subscription_end": current_user.subscription_end.isoformat() if current_user.is_subscribed() else None
+    })
 
-@user.route('/check_session')
-def check_session():
-    # 打印当前会话信息
-    print(session)
-    return jsonify(session)
+
 

@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { AppBar, Toolbar, Typography, Container, Paper, Button } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
-import { getCurrentUsername } from '../services/api'; // 引入API服务
+import { getCurrentUsername } from '../services/api';
 
 const Layout = ({ children, title }) => {
   const location = useLocation();
   const [username, setUsername] = useState(null);
-  const [error, setError] = useState(null); // 用于存储错误信息
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchUsername = async () => {
       try {
-        const response = await getCurrentUsername(); // 调用API服务
-        setUsername(response.data.username); // 设置用户名
+        const response = await getCurrentUsername();
+        setUsername(response.data.username);
       } catch (error) {
         if (error.response && error.response.status === 401) {
           setUsername(null);
@@ -41,14 +41,13 @@ const Layout = ({ children, title }) => {
           >
             UMTC
           </Typography>
-          {/* 显示用户名或登录按钮 */}
           {username ? (
             <Button
               color="inherit"
               component={Link}
-              to="/user-info"
+              to="/user"
               sx={{
-                color: location.pathname === '/user-info' ? '#f0f0f0' : 'white',
+                color: location.pathname === '/user' ? '#f0f0f0' : 'white',
                 textTransform: 'none',
               }}
             >
@@ -88,7 +87,7 @@ const Layout = ({ children, title }) => {
           <Typography variant="h4" component="h1" gutterBottom>
             {title}
           </Typography>
-          {error && <Typography color="error">{error}</Typography>} {/* 显示错误信息 */}
+          {error && <Typography color="error">{error}</Typography>}
           {children}
         </Paper>
       </Container>

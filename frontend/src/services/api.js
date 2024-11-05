@@ -19,10 +19,17 @@ export const getCurrentUsername = () => {
   return axios.get(`${API_BASE_URL}/user/info/current/username`, { withCredentials: true });
 };
 
+export const getUserInfo = () => {
+  return axios.get(`${API_BASE_URL}/user/info/current`, { withCredentials: true });
+};
+
 export const subscribe = (subscriptionPeriod, autoRenew) => {
   return axios.post(`${API_BASE_URL}/user/subscription`, { subscription_period: subscriptionPeriod, auto_renew: autoRenew }, { withCredentials: true });
 };
 
+export const viewHistory = () => {
+  return axios.get(`${API_BASE_URL}/history`, { withCredentials: true });
+};
 
 export const diffusion = (d, r, ns) => {
   return axios.post(`${API_BASE_URL}/calculation/diffusion`, { d, r, ns }, { withCredentials: true });
