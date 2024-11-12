@@ -1,8 +1,10 @@
 from email_validator import validate_email, EmailNotValidError
 from password_validator import PasswordValidator
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response, current_app as app
 from flask_login import login_user, logout_user, current_user, login_required
-from app import db, login_manager
+from flask_mail import Message
+import jwt
+from app import db, login_manager, mail
 from app.models import User
 from datetime import datetime, timedelta, timezone
 
@@ -29,11 +31,6 @@ def login():
     login_user(user, remember=remember_me)
     print(f"User {current_user.username} logged in")
     return jsonify({"message": "Logged in successfully"}), 200
-
-@user.route('/logout', methods=['POST'])
-def logout():
-    logout_user()
-    return jsonify({"message": "Logged out successfully"}), 200
 
 @user.route('/register', methods=['POST'])
 def register():
@@ -114,22 +111,6 @@ def subscription():
 #     flash('Your subscription has been cancelled.', 'info')
 #     return redirect(url_for('main.index'))
 
-# @auth.route('/forgot_password', methods=['GET', 'POST'])
-# def forgot_password():
-#     form = ForgotPasswordForm()
-#     if form.validate_on_submit():
-#         user = User.query.filter_by(email=form.email.data).first()
-#         if user:
-#             # TODO: Implement email sending verification code logic here
-#             flash('An email has been sent with instructions to reset your password.', 'info')
-
-#             # TODO: If verification code is correct, redirect to reset_password page
-#             return redirect(url_for('auth.reset_password'))
-#         else:
-#             flash('Email not found.', 'danger')
-#     return render_template('forgot_password.html', form=form)
-
-
 @login_manager.unauthorized_handler
 def unauthorized():
     return jsonify({"error": "Unauthorized access"}), 401
@@ -148,5 +129,74 @@ def get_user_info():
         "subscription_end": current_user.subscription_end.isoformat() if current_user.is_subscribed() else None
     })
 
+@user.route('/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    response = make_response(jsonify({"message": "Logged out successfully"}), 200)
+    response.delete_cookie('umtc_session_cookie')
+    return response
 
+@user.route('/forgot_password', methods=['POST'])
+def forgot_password():
+    data = request.get_json()
+    email = data.get('email')
 
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        return jsonify({"error": "Email not registered"}), 400
+    
+    reset_token = jwt.encode(
+        {'user_id': user.id, 'exp': datetime.now(timezone.utc) + timedelta(hours=1)},
+        app.config['SECRET_KEY'],
+        algorithm='HS256'
+    )
+
+    # Send reset link to email (you should configure Flask-Mail with your email settings)
+    reset_url = f"{app.config['FRONTEND_URL']}/reset-password/{reset_token}"
+
+    # Create the email message
+    msg = Message('Password Reset Request', sender=("No Reply", app.config['MAIL_DEFAULT_SENDER']), recipients=[email])
+    msg.body = f"To reset your password, please visit the following link: {reset_url}"
+    
+    try:
+        mail.send(msg)
+        return jsonify({"message": "Password reset email sent"}), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to send email"}), 500
+    
+@user.route('/reset_password/<reset_token>', methods=['POST'])
+def reset_password(reset_token):
+    data = request.get_json()
+    new_password = data.get('new_password')
+
+    try:
+        # Decode the reset token
+        decoded_token = jwt.decode(reset_token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        user_id = decoded_token['user_id']
+        
+        # Find the user
+        user = User.query.get(user_id)
+        if user is None:
+            return jsonify({"error": "User not found"}), 404
+
+        # Validate the new password
+        password_validator = PasswordValidator()
+        password_validator\
+            .min(6)\
+            .max(20)\
+            .has().letters()\
+            .has().digits()\
+            .has().no().spaces()
+        if not password_validator.validate(new_password):
+            return jsonify({"error": "Invalid password, at least 6 characters, both letters and digits, no spaces"}), 400
+
+        # Set the new password
+        user.set_password(new_password)
+        db.session.commit()
+
+        return jsonify({"message": "Password reset successful"}), 200
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Token expired, request a new reset link"}), 400
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid token"}), 400

@@ -1,7 +1,6 @@
-// src/pages/Subscribe.js
 import React from 'react';
 import { Typography, Button, Stack } from '@mui/material';
-import Layout from './Layout';
+import Layout from '../components/Layout';
 import { subscribe } from '../services/api';
 
 const Subscription = () => {
@@ -10,7 +9,7 @@ const Subscription = () => {
       const response = await subscribe(period);
       alert(response.data.message);
     } catch (error) {
-      alert('Failed to subscribe');
+      alert('Failed to subscrbe');
     }
   };
 

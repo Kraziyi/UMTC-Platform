@@ -4,10 +4,12 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from config import Config
 from flask_cors import CORS
+from flask_mail import Mail
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.login_view = 'user.login'
+mail = Mail()
 
 def create_app():
     app = Flask(__name__)
@@ -18,6 +20,7 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     Migrate(app, db)
+    mail.init_app(app)
 
     app.permanent_session_lifetime = Config.REMEMBER_COOKIE_DURATION
 

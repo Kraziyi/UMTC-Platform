@@ -1,7 +1,6 @@
-// src/pages/ViewHistory.js
 import React, { useEffect, useState } from 'react';
 import { Typography, CircularProgress, List, ListItem, ListItemText, Paper } from '@mui/material';
-import Layout from './Layout';
+import Layout from '../components/Layout';
 import { viewHistory } from '../services/api';
 
 const History = () => {

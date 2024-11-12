@@ -8,11 +8,11 @@ export const login = (username, password, rememberMe) => {
 };
 
 export const register = (username, email, password) => {
-  return axios.post(`${API_BASE_URL}/user/register`, { username, email, password });
+  return axios.post(`${API_BASE_URL}/user/register`, { username, email, password }, { withCredentials: true });
 };
 
 export const logout = () => {
-  return axios.post(`${API_BASE_URL}/user/logout`);
+  return axios.post(`${API_BASE_URL}/user/logout`, {}, { withCredentials: true });
 };
 
 export const getCurrentUsername = () => {
@@ -25,6 +25,14 @@ export const getUserInfo = () => {
 
 export const subscribe = (subscriptionPeriod, autoRenew) => {
   return axios.post(`${API_BASE_URL}/user/subscription`, { subscription_period: subscriptionPeriod, auto_renew: autoRenew }, { withCredentials: true });
+};
+
+export const forgotPassword = (email) => {
+  return axios.post(`${API_BASE_URL}/user/forgot_password`, { email }, { withCredentials: true });
+}
+
+export const resetPassword = (token, newPassword) => {
+  return axios.post(`${API_BASE_URL}/user/reset_password/${token}`, { new_password: newPassword }, { withCredentials: true });
 };
 
 export const viewHistory = () => {

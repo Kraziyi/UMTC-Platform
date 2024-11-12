@@ -1,22 +1,32 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Login from './components/Login';
-import Register from './components/Register';
-import Subscription from './components/Subscription';
-import Logout from './components/Logout';
-import Diffusion from './components/Diffusion';
-import User from './components/User';
-import History from './components/History';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Subscription from './pages/Subscription';
+import Logout from './pages/Logout';
+import User from './pages/User';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import History from './pages/History';
+
+import Calculation from './pages/Calculation';
+import Diffusion from './pages/Diffusion';
+
 
 function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/user" element={<User />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/subscription" element={<Subscription />} />
         <Route path="/history" element={<History />} />
         <Route path="/logout" element={<Logout />} />
+        <Route path="/calculation" element={<Calculation />} />
         <Route path="/calculation/diffusion" element={<Diffusion />} />
       </Routes>
     </Router>

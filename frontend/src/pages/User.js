@@ -1,8 +1,7 @@
-// src/pages/UserInfo.js
 import React, { useEffect, useState } from 'react';
 import { Typography, CircularProgress, Button, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import Layout from './Layout';
+import Layout from '../components/Layout';
 import { getUserInfo } from '../services/api';
 
 const User = () => {
@@ -58,6 +57,9 @@ const User = () => {
         </Button>
         <Button variant="contained" color="secondary" onClick={() => navigate('/subscription')}>
           {userInfo?.subscription_end ? 'Extend Subscription' : 'Subscribe'}
+        </Button>
+        <Button variant="contained" color="third" onClick={() => navigate('/logout')}>
+          Logout
         </Button>
       </Stack>
     </Layout>

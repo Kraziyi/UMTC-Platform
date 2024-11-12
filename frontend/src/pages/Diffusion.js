@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { TextField, Button, CircularProgress, Typography, Grid } from '@mui/material';
 import { diffusion } from '../services/api';
-import Layout from './Layout';
+import Layout from '../components/Layout';
 import { CategoryScale, LinearScale, LineElement, PointElement, LineController, Chart } from 'chart.js';
 
 Chart.register(CategoryScale, LinearScale, LineElement, PointElement, LineController);

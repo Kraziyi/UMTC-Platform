@@ -1,9 +1,8 @@
-// Register.js
 import React, { useState } from 'react';
 import { Button, TextField, Typography, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../services/api';
-import Layout from './Layout';
+import Layout from '../components/Layout';
 
 const Register = () => {
   const [username, setUsername] = useState('');
