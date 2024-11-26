@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { AppBar, Toolbar, Typography, Container, Paper, Button } from '@mui/material';
-import { Link, useLocation } from 'react-router-dom';
+import { Typography, Box } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 import { getCurrentUsername } from '../services/api';
+import HeadBar from './HeadBar';
+import FootBar from './FootBar';
 
 const Layout = ({ children, title }) => {
   const location = useLocation();
@@ -21,76 +23,43 @@ const Layout = ({ children, title }) => {
         }
       }
     };
-
     fetchUsername();
   }, []);
 
-  const menuItems = [
-    { text: 'Calculation', path: '/calculation' },
-  ];
-
   return (
     <>
-      <AppBar position="static" sx={{ backgroundColor: '#1976d2' }}>
-        <Toolbar>
+      <Box sx={{ backgroundColor: '#FFCB05', height: '20px', width: '100%' }}></Box>
+      <HeadBar username={username} location={location} />
+
+      {/* Main Content */}
+      <Box sx={{ padding: '2rem', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+        {/* Title */}
+        {title && (
           <Typography
-            variant="h6"
-            component={Link}
-            to="/"
-            sx={{ color: 'white', textDecoration: 'none', flexGrow: 1 }}
+            variant="h4"
+            component="h1"
+            gutterBottom
+            sx={{
+              fontFamily: "'Roboto Slab', serif",
+              fontWeight: '400',
+              marginBottom: '1rem',
+              textAlign: 'center',  // Center align the title
+            }}
           >
-            UMTC
-          </Typography>
-          {username ? (
-            <Button
-              color="inherit"
-              component={Link}
-              to="/user"
-              sx={{
-                color: location.pathname === '/user' ? '#f0f0f0' : 'white',
-                textTransform: 'none',
-              }}
-            >
-              {username}
-            </Button>
-          ) : (
-            <Button
-              color="inherit"
-              component={Link}
-              to="/login"
-              sx={{
-                color: location.pathname === '/login' ? '#f0f0f0' : 'white',
-                textTransform: 'none',
-              }}
-            >
-              Login
-            </Button>
-          )}
-          {menuItems.map((item) => (
-            <Button
-              key={item.text}
-              component={Link}
-              to={item.path}
-              color="inherit"
-              sx={{
-                color: location.pathname === item.path ? '#f0f0f0' : 'white',
-                textTransform: 'none',
-              }}
-            >
-              {item.text}
-            </Button>
-          ))}
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="lg">
-        <Paper elevation={3} sx={{ marginTop: '2rem', padding: '2rem' }}>
-          <Typography variant="h4" component="h1" gutterBottom>
             {title}
           </Typography>
-          {error && <Typography color="error">{error}</Typography>}
-          {children}
-        </Paper>
-      </Container>
+        )}
+
+        {/* Error Message */}
+        {error && <Typography color="error">{error}</Typography>}
+
+        {/* Content */}
+        {children}
+      </Box>
+
+      <Box sx={{ backgroundColor: '#FFCB05', height: '10px', width: '100%' }}></Box>
+
+      <FootBar />
     </>
   );
 };
