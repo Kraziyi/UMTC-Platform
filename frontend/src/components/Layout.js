@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Box } from '@mui/material';
-import { useLocation } from 'react-router-dom';
-import { getCurrentUsername } from '../services/api';
 import HeadBar from './HeadBar';
 import FootBar from './FootBar';
+import { getCurrentUsername } from '../services/api';
 
-const Layout = ({ children, title }) => {
-  const location = useLocation();
+const Layout = ({ children, title, subTitle }) => {
   const [username, setUsername] = useState(null);
   const [error, setError] = useState(null);
 
@@ -29,35 +27,72 @@ const Layout = ({ children, title }) => {
   return (
     <>
       <Box sx={{ backgroundColor: '#FFCB05', height: '20px', width: '100%' }}></Box>
-      <HeadBar username={username} location={location} />
+      <HeadBar username={username} />
 
       {/* Main Content */}
-      <Box sx={{ padding: '2rem', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-        {/* Title */}
+      <Box sx={{ padding: '2rem', minHeight: '60vh', backgroundColor: '#f5f5f5', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        {/* Title Box */}
         {title && (
-          <Typography
-            variant="h4"
-            component="h1"
-            gutterBottom
+          <Box
             sx={{
-              fontFamily: "'Roboto Slab', serif",
-              fontWeight: '400',
-              marginBottom: '1rem',
-              textAlign: 'center',  // Center align the title
+              padding: '0.5rem',
+              backgroundColor: '#FFCB05',
+              borderRadius: '2px',
+              width: 'auto',
+              maxWidth: '20%',
+              height: '40px',
+              minWidth: '100px',
+              marginLeft: '5rem',
+              paddingTop: '18px',
+              display: 'flex',
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              boxSizing: 'border-box'
             }}
           >
-            {title}
-          </Typography>
+            <Typography
+              variant="h4"
+              component="h1"
+              gutterBottom
+              sx={{
+                fontFamily: "'Open Sans', sans-serif",
+                fontWeight: '1000',
+                fontSize: '1.5rem',
+                textAlign: 'center',
+              }}
+            >
+              {title}
+            </Typography>
+          </Box>
         )}
 
-        {/* Error Message */}
-        {error && <Typography color="error">{error}</Typography>}
 
-        {/* Content */}
-        {children}
+        {/* Right Side Content (SubTitle and Content) */}
+        <Box sx={{ flexBasis: '70%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
+          {/* SubTitle */}
+          {subTitle && (
+            <Typography
+              variant="h6"
+              component="h2"
+              sx={{
+                fontFamily: "'Roboto', sans-serif",
+                fontWeight: '1500',
+                fontSize: '2rem',
+                marginBottom: '0.5rem',
+                color: '#00274C',
+              }}
+            >
+              {subTitle}
+            </Typography>
+          )}
+          <Box sx={{ backgroundColor: '#00274C', height: '3px', width: '100%', marginBottom: '20px' }}></Box>
+          {/* Content */}
+          {error && <Typography color="error">{error}</Typography>}
+          {children}
+        </Box>
       </Box>
 
-      <Box sx={{ backgroundColor: '#FFCB05', height: '10px', width: '100%' }}></Box>
+      <Box sx={{ backgroundColor: '#FFCB05', height: '3px', width: '100%' }}></Box>
 
       <FootBar />
     </>

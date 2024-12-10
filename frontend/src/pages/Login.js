@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, Typography, Checkbox, FormControlLabel, CircularProgress } from '@mui/material';
+import { TextField, Typography, Checkbox, FormControlLabel, CircularProgress, Box } from '@mui/material';
 import { useNavigate, Link } from 'react-router-dom';
 import { login, getCurrentUsername } from '../services/api';
 import Layout from '../components/Layout';
+import CustomButton from '../components/CustomButton';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -34,7 +35,7 @@ const Login = () => {
     try {
       const response = await login(username, password, rememberMe);
       setMessage(response.data.message);
-      navigate('/calculation/diffusion'); // Redirect to a protected page or home page
+      navigate('/calculation/diffusion');
     } catch (error) {
       setMessage(error.response?.data.error || 'Error logging in');
     } finally {
@@ -43,43 +44,60 @@ const Login = () => {
   };
 
   return (
-    <Layout title="Login">
+    <Layout title={`User`} subTitle={`Login`}>
       {isLoggedIn ? (
         <Typography variant="h6" color="primary">
           You are already logged in.
         </Typography>
       ) : loading ? (
-        <CircularProgress />
+        <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+          <CircularProgress />
+        </Box>
       ) : (
         <form onSubmit={handleSubmit}>
-          <TextField label="Username" value={username} onChange={(e) => setUsername(e.target.value)} fullWidth margin="normal" />
-          <TextField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} fullWidth margin="normal" />
-          <FormControlLabel
-            control={<Checkbox checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />}
-            label="Remember Me"
+          <TextField
+            label="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            fullWidth
+            margin="normal"
           />
-          <Button type="submit" variant="contained" color="primary" fullWidth>
+          <TextField
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+          <Box sx={{ display: 'flex', justifyContent: 'center', marginY: 2 }}>
+            <FormControlLabel
+              control={
+                <Checkbox 
+                  checked={rememberMe} 
+                  onChange={(e) => setRememberMe(e.target.checked)} 
+                />
+              }
+              label="Remember Me"
+            />
+          </Box>
+          <CustomButton type="submit" color="primary" fullWidth>
             Login
-          </Button>
-          {message && <Typography color="error" style={{ marginTop: '10px' }}>{message}</Typography>}
-          <Button
+          </CustomButton>
+          {message && (
+            <Typography color="error" sx={{ marginTop: '10px' }}>
+              {message}
+            </Typography>
+          )}
+          <CustomButton
             component={Link}
-            to="/register"
-            variant="outlined"
-            color="secondary"
+            to="/forgot-password"
+            color="primary"
             fullWidth
             sx={{ marginTop: '10px' }}
           >
-            Register
-          </Button>
-          <Button
-            component={Link}
-            to="/forgot-password"
-            variant="outlined"
-            color="tertiary"
-            fullWidth
-            sx={{ marginTop: '10px' }}
-          > Forgot Password </Button>
+            Forgot Password
+          </CustomButton>
         </form>
       )}
     </Layout>

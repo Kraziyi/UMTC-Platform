@@ -1,6 +1,7 @@
 import React from 'react';
-import { Typography, Button, Stack } from '@mui/material';
+import { Typography, Stack } from '@mui/material';
 import Layout from '../components/Layout';
+import CustomButton from '../components/CustomButton';
 import { subscribe } from '../services/api';
 
 const Subscription = () => {
@@ -14,18 +15,19 @@ const Subscription = () => {
   };
 
   return (
-    <Layout title="Subscribe">
+    <Layout title={`User`} subTitle={`Subscribe`}>
       <Typography variant="h5" gutterBottom>Choose Subscription Period</Typography>
       <Stack spacing={2} direction="column">
-        <Button variant="contained" onClick={() => handleSubscribe('1month')}>
+        <CustomButton onClick={() => handleSubscribe('1month')} color="primary">
           Subscribe for 1 Month
-        </Button>
-        <Button variant="contained" onClick={() => handleSubscribe('3months')}>
+        </CustomButton>
+        <CustomButton onClick={() => handleSubscribe('3months')} color="primary">
           Subscribe for 3 Months
-        </Button>
-        <Button variant="contained" onClick={() => handleSubscribe('1year')}>
+        </CustomButton>
+        <CustomButton onClick={() => handleSubscribe('1year')} color="primary">
           Subscribe for 1 Year
-        </Button>
+        </CustomButton>
+
       </Stack>
     </Layout>
   );

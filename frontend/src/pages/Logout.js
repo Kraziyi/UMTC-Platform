@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Button, Typography, CircularProgress } from '@mui/material';
+import { Typography, CircularProgress, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../services/api';
 import Layout from '../components/Layout';
+import CustomButton from '../components/CustomButton';
 
 const Logout = () => {
   const [loading, setLoading] = useState(false);
@@ -12,7 +13,7 @@ const Logout = () => {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      await logout(); 
+      await logout();
       setMessage("Logged out successfully.");
       navigate('/');
     } catch (error) {
@@ -23,16 +24,22 @@ const Logout = () => {
   };
 
   return (
-    <Layout title="Logout">
+    <Layout title={`User`} subTitle={`Logout`}>
       {loading ? (
-        <CircularProgress />
+        <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+          <CircularProgress />
+        </Box>
       ) : (
-        <div>
-          <Button variant="contained" color="secondary" onClick={handleLogout} fullWidth>
+        <Box sx={{ marginTop: '20px', textAlign: 'center' }}>
+          <CustomButton color="secondary" onClick={handleLogout} fullWidth>
             Logout
-          </Button>
-          {message && <Typography color="error" style={{ marginTop: '10px' }}>{message}</Typography>}
-        </div>
+          </CustomButton>
+          {message && (
+            <Typography color="error" sx={{ marginTop: '10px' }}>
+              {message}
+            </Typography>
+          )}
+        </Box>
       )}
     </Layout>
   );

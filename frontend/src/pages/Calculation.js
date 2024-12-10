@@ -1,7 +1,8 @@
 // src/pages/Calculation.js
 import React from 'react';
-import { Button, Typography, Box } from '@mui/material';
+import { Typography, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import CustomButton from '../components/CustomButton';
 import Layout from '../components/Layout';
 
 const Calculation = () => {
@@ -12,20 +13,14 @@ const Calculation = () => {
   };
 
   return (
-    <Layout title="Calculation">
+    <Layout title={`Calculation`} subTitle={`List`}>
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
         <Typography variant="h6">Choose a Calculation Method:</Typography>
         
         {/* Diffusion Calculation Button */}
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={handleDiffusionClick}
-          fullWidth
-          sx={{ maxWidth: '300px' }}
-        >
+        <CustomButton onClick={handleDiffusionClick} color="primary">
           Diffusion
-        </Button>
+        </CustomButton>
 
         {/* Add more calculation buttons here as needed */}
         

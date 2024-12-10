@@ -28,7 +28,7 @@ const ResetPassword = () => {
   };
 
   return (
-    <Layout title="Reset Password">
+    <Layout title={`User`} subTitle={`Reset Password`}>
       <TextField
         label="New Password"
         type="password"

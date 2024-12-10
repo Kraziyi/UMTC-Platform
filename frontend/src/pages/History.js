@@ -25,7 +25,7 @@ const History = () => {
 
   if (loading) {
     return (
-      <Layout title="History">
+      <Layout title={`User`} subTitle={`History`}>
         <CircularProgress />
       </Layout>
     );
@@ -33,15 +33,14 @@ const History = () => {
 
   if (error) {
     return (
-      <Layout title="History">
+      <Layout title={`User`} subTitle={`History`}>
         <Typography color="error">{error}</Typography>
       </Layout>
     );
   }
 
   return (
-    <Layout title="User History">
-      <Typography variant="h5" gutterBottom>User History</Typography>
+    <Layout title={`User`} subTitle={`History`}>
       {historyData.length === 0 ? (
         <Typography>No history found.</Typography>
       ) : (

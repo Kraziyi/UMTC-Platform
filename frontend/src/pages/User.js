@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, CircularProgress, Button, Stack } from '@mui/material';
+import { Typography, CircularProgress, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import CustomButton from '../components/CustomButton';
 import { getUserInfo } from '../services/api';
 
 const User = () => {
@@ -27,7 +28,7 @@ const User = () => {
 
   if (loading) {
     return (
-      <Layout title="User Profile">
+      <Layout title={`User`} subTitle={`Profile`}>
         <CircularProgress />
       </Layout>
     );
@@ -35,15 +36,15 @@ const User = () => {
 
   if (error) {
     return (
-      <Layout title="User Profile">
+      <Layout title={`User`} subTitle={`Profile`}>
         <Typography color="error">{error}</Typography>
       </Layout>
     );
   }
 
   return (
-    <Layout title="User Profile">
-      <Typography variant="h5">User Information</Typography>
+    <Layout title={`User`} subTitle={`Profile`}>
+      {/* <Typography variant="h5">User Information</Typography> */}
       {userInfo && (
         <>
           <Typography variant="body1"><strong>Username:</strong> {userInfo.username}</Typography>
@@ -52,15 +53,15 @@ const User = () => {
         </>
       )}
       <Stack direction="row" spacing={2} sx={{ marginTop: 2 }}>
-        <Button variant="contained" color="primary" onClick={() => navigate('/history')}>
+        <CustomButton color="primary" onClick={() => navigate('/history')}>
           View History
-        </Button>
-        <Button variant="contained" color="secondary" onClick={() => navigate('/subscription')}>
+        </CustomButton>
+        <CustomButton color="primary" onClick={() => navigate('/subscription')}>
           {userInfo?.subscription_end ? 'Extend Subscription' : 'Subscribe'}
-        </Button>
-        <Button variant="contained" color="third" onClick={() => navigate('/logout')}>
+        </CustomButton>
+        <CustomButton color="primary" onClick={() => navigate('/logout')}>
           Logout
-        </Button>
+        </CustomButton>
       </Stack>
     </Layout>
   );

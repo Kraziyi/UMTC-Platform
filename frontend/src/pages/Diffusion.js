@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Line } from 'react-chartjs-2';
-import { TextField, Button, CircularProgress, Typography, Grid } from '@mui/material';
+import { TextField, CircularProgress, Typography, Box } from '@mui/material';
 import { diffusion } from '../services/api';
 import Layout from '../components/Layout';
+import CustomButton from '../components/CustomButton';
 import { CategoryScale, LinearScale, LineElement, PointElement, LineController, Chart } from 'chart.js';
 
 Chart.register(CategoryScale, LinearScale, LineElement, PointElement, LineController);
@@ -21,22 +22,21 @@ const Diffusion = () => {
     setLoading(true);
     setError(null);
     setChartData(null);
-  
+
     try {
-      // Convert input values to float before sending to the API
       const dValue = parseFloat(d);
       const rValue = parseFloat(r);
       const nsValue = parseFloat(ns);
-  
+
       if (isNaN(dValue) || isNaN(rValue) || isNaN(nsValue)) {
         setError("Please enter valid numbers for all fields.");
         setLoading(false);
         return;
       }
-  
+
       const response = await diffusion(dValue, rValue, nsValue);
       const { rp_disc, cs_iter, loss_value } = response.data;
-  
+
       setChartData({
         labels: rp_disc,
         datasets: [
@@ -58,64 +58,58 @@ const Diffusion = () => {
   };
 
   return (
-    <Layout title="Diffusion Simulation">
+    <Layout title={`Calculation`} subTitle={`Diffusion`}>
       <form onSubmit={handleSubmit}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              label="Diffusion Coefficient (d)"
-              value={d}
-              onChange={(e) => setD(e.target.value)}
-              fullWidth
-              required
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              label="Radius (r)"
-              value={r}
-              onChange={(e) => setR(e.target.value)}
-              fullWidth
-              required
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              label="Number of Steps (ns)"
-              value={ns}
-              onChange={(e) => setNs(e.target.value)}
-              fullWidth
-              required
-            />
-          </Grid>
-        </Grid>
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          disabled={loading}
-          style={{ marginTop: '20px' }}
-        >
-          {loading ? <CircularProgress size={24} /> : 'Run Simulation'}
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center', marginBottom: '20px' }}>
+          <TextField
+            label="Diffusion Coefficient (d)"
+            value={d}
+            onChange={(e) => setD(e.target.value)}
+            fullWidth
+            required
+          />
+          <TextField
+            label="Radius (r)"
+            value={r}
+            onChange={(e) => setR(e.target.value)}
+            fullWidth
+            required
+          />
+          <TextField
+            label="Number of Steps (ns)"
+            value={ns}
+            onChange={(e) => setNs(e.target.value)}
+            fullWidth
+            required
+          />
+        </Box>
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+          <CustomButton type="submit" color="primary" disabled={loading}>
+            {loading ? <CircularProgress size={24} /> : 'Run Simulation'}
+          </CustomButton>
+        </Box>
       </form>
 
-      {error && <Typography color="error" style={{ marginTop: '10px' }}>{error}</Typography>}
+      {error && (
+        <Typography color="error" sx={{ marginTop: '10px', textAlign: 'center' }}>
+          {error}
+        </Typography>
+      )}
 
       {chartData && (
-        <div style={{ margin: '80px', width: '900px', height: '600px' }}>
-          <Typography variant="h6">Simulation Results</Typography>
-          <Line 
-            data={chartData} 
+        <Box sx={{ margin: '80px auto', width: '900px', height: '600px', textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ marginBottom: '20px' }}>
+            Loss Value: {lossValue}
+          </Typography>
+          <Line
+            data={chartData}
             options={{
               responsive: true,
               maintainAspectRatio: false,
-            }} 
+            }}
           />
-          <Typography variant="body1" style={{ marginTop: '10px' }}>
-            Loss Value: {lossValue}
-          </Typography>
-        </div>
+        </Box>
       )}
     </Layout>
   );

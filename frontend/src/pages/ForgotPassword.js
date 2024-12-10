@@ -22,7 +22,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <Layout title="Forgot Password">
+    <Layout title={`User`} subTitle={`Forgot Password`}>
       <form onSubmit={handleSubmit}>
         <TextField
           label="Email"

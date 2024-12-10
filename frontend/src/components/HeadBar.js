@@ -1,9 +1,10 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ReactComponent as HeadLogo } from '../logo.svg';
 
-const HeadBar = ({ username, location }) => {
+const HeadBar = ({ username}) => {
+  const location = useLocation();
   return (
     <AppBar position="static" sx={{ backgroundColor: '#00274C', height: '65px' }}>
       <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

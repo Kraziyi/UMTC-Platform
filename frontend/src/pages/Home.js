@@ -1,11 +1,12 @@
 import React from 'react';
-import { Button, Typography, Box } from '@mui/material';
+import { Typography, Box } from '@mui/material';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
+import CustomButton from '../components/CustomButton';
 
 const Home = () => {
   return (
-    <Layout title="Welcome to UMTC">
+    <Layout title={`UMTC`} subTitle={`Dashboard`}>
       <Box sx={{ textAlign: 'center', mt: 4 }}>
         <Typography variant="h5" gutterBottom>
           Welcome to the UMTC Platform
@@ -14,23 +15,22 @@ const Home = () => {
           This is the main portal to access calculations, user profile, and more.
         </Typography>
         <Box sx={{ mt: 3 }}>
-          <Button
+          <CustomButton
             component={Link}
             to="/login"
-            variant="contained"
             color="primary"
             sx={{ mr: 2 }}
           >
             Login
-          </Button>
-          <Button
+          </CustomButton>
+          <CustomButton
             component={Link}
             to="/register"
-            variant="outlined"
             color="primary"
+            sx={{ mr: 2 }}
           >
             Register
-          </Button>
+          </CustomButton>
         </Box>
       </Box>
     </Layout>
