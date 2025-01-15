@@ -12,6 +12,9 @@ import History from './pages/History';
 import Calculation from './pages/Calculation';
 import Diffusion from './pages/Diffusion';
 
+import FileUploadPage from './pages/FileUploadPage';
+import FunctionInvoker from './pages/FunctionInvoker';
+
 
 function App() {
   return (
@@ -28,6 +31,8 @@ function App() {
         <Route path="/logout" element={<Logout />} />
         <Route path="/calculation" element={<Calculation />} />
         <Route path="/calculation/diffusion" element={<Diffusion />} />
+        <Route path="/file-upload" element={<FileUploadPage />} />
+        <Route path="/functions/:functionName" element={<FunctionInvoker />} />
       </Routes>
     </Router>
   );

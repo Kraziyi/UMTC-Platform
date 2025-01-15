@@ -42,3 +42,25 @@ export const viewHistory = () => {
 export const diffusion = (d, r, ns) => {
   return axios.post(`${API_BASE_URL}/calculation/diffusion`, { d, r, ns }, { withCredentials: true });
 }
+
+export const uploadFile = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return axios.post(`${API_BASE_URL}/upload`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    withCredentials: true,
+  });
+};
+
+export const getUploadedFunctions = async () => {
+  return await axios.get(`${API_BASE_URL}/calculation/uploaded`, { withCredentials: true });
+};
+
+export const invokeFunction = async (functionName, data) => {
+  return await axios.post(`${API_BASE_URL}/calculation/${functionName}`, data);
+};
+
+export const describeFunction = async (functionName) => {
+  return await axios.get(`${API_BASE_URL}/calculation/describe/${functionName}`);
+}

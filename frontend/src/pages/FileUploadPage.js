@@ -1,0 +1,100 @@
+import React, { useState } from 'react';
+import { Box, Button, Typography, LinearProgress } from '@mui/material';
+import Layout from '../components/Layout';
+import { uploadFile } from '../services/api';
+
+const FileUploadPage = () => {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const [progress, setProgress] = useState(0);
+
+  const handleFileChange = (event) => {
+    setSelectedFile(event.target.files[0]);
+    setUploadStatus('');
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setUploadStatus('Please select a file first.');
+      return;
+    }
+
+    try {
+      setProgress(0);
+      setUploadStatus('Uploading...');
+      
+      const response = await uploadFile(selectedFile);
+
+      setUploadStatus(
+        `Upload successful! Registered routes: ${response.data.routes.join(', ')}`
+      );
+      setSelectedFile(null);
+    } catch (error) {
+      // 捕获后端返回的错误消息
+      const errorMessage = error.response?.data?.message || 'An unexpected error occurred. Please try again.';
+      setUploadStatus(`Upload failed: ${errorMessage}`);
+    }
+  };
+
+  return (
+    <Layout title="File Upload" subTitle="Upload Python Files">
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, width: '100%' }}>
+        <Typography variant="h6" sx={{ color: '#00274C' }}>
+          Upload a Python file to register dynamic API routes
+        </Typography>
+
+        <input
+          type="file"
+          accept=".py"
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+          id="file-input"
+        />
+        <label htmlFor="file-input">
+          <Button variant="outlined" component="span" sx={{ textTransform: 'none' }}>
+            Choose File
+          </Button>
+        </label>
+
+        {selectedFile && (
+          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+            Selected File: {selectedFile.name}
+          </Typography>
+        )}
+
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleUpload}
+          sx={{ textTransform: 'none', backgroundColor: '#FFCB05', color: '#00274C' }}
+        >
+          Upload
+        </Button>
+
+        {uploadStatus && (
+          <Typography
+            variant="body2"
+            sx={{
+              marginTop: '10px',
+              color: uploadStatus.includes('successful') ? 'green' : 'red',
+              fontWeight: '600',
+            }}
+          >
+            {uploadStatus}
+          </Typography>
+        )}
+
+        {progress > 0 && progress < 100 && (
+          <Box sx={{ width: '100%', mt: 2 }}>
+            <LinearProgress variant="determinate" value={progress} />
+            <Typography variant="caption" sx={{ color: '#00274C' }}>
+              {progress}%
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    </Layout>
+  );
+};
+
+export default FileUploadPage;
