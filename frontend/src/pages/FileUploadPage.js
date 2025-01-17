@@ -18,23 +18,32 @@ const FileUploadPage = () => {
       setUploadStatus('Please select a file first.');
       return;
     }
-
+  
     try {
       setProgress(0);
       setUploadStatus('Uploading...');
-      
+  
       const response = await uploadFile(selectedFile);
-
+  
       setUploadStatus(
         `Upload successful! Registered routes: ${response.data.routes.join(', ')}`
       );
       setSelectedFile(null);
     } catch (error) {
-      // 捕获后端返回的错误消息
-      const errorMessage = error.response?.data?.message || 'An unexpected error occurred. Please try again.';
-      setUploadStatus(`Upload failed: ${errorMessage}`);
+      let errorMessage = 'An unexpected error occurred. Please try again.';
+      
+      if (error.response) {
+        if (error.response.status === 403) {
+          errorMessage = 'Upload failed: You need admin privileges to perform this action.';
+        } else if (error.response.data?.message) {
+          errorMessage = `Upload failed: ${error.response.data.message}`;
+        }
+      }
+  
+      setUploadStatus(errorMessage);
     }
   };
+  
 
   return (
     <Layout title="File Upload" subTitle="Upload Python Files">

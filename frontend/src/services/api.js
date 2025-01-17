@@ -58,9 +58,9 @@ export const getUploadedFunctions = async () => {
 };
 
 export const invokeFunction = async (functionName, data) => {
-  return await axios.post(`${API_BASE_URL}/calculation/${functionName}`, data);
+  return await axios.post(`${API_BASE_URL}/calculation/${functionName}`, data, { withCredentials: true });
 };
 
 export const describeFunction = async (functionName) => {
-  return await axios.get(`${API_BASE_URL}/calculation/describe/${functionName}`);
+  return await axios.get(`${API_BASE_URL}/calculation/describe/${functionName}`, { withCredentials: true });
 }
