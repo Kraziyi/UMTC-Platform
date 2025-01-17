@@ -14,6 +14,7 @@ import Diffusion from './pages/Diffusion';
 
 import FileUploadPage from './pages/FileUploadPage';
 import FunctionInvoker from './pages/FunctionInvoker';
+import ManageCalculation from './pages/ManageCalculations';
 
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
         <Route path="/calculation/diffusion" element={<Diffusion />} />
         <Route path="/file-upload" element={<FileUploadPage />} />
         <Route path="/functions/:functionName" element={<FunctionInvoker />} />
+        <Route path="/manage-calculation" element={<ManageCalculation />} />
       </Routes>
     </Router>
   );

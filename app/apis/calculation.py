@@ -6,6 +6,7 @@ import inspect
 from app import db
 from app.models import History
 from app.utils import diffusion_solver, dynamic_router, convert_to_serializable
+from app.utils.decorators import admin_required
 
 calculation = Blueprint('calculation', __name__)
 
@@ -102,16 +103,48 @@ def describe_function(function_name):
 
 
 @calculation.route('/uploaded', methods=['GET'])
-@login_required
+@admin_required
 def list_functions():
     """
     API endpoint to list all uploaded functions.
     """
     try:
         registered_functions = [
-            {"endpoint": name, "url": f"/api/calculation/{name}"}
-            for name in dynamic_router.registered_functions.keys()
+            {"endpoint": name, "url": f"/api/calculation/{name}", "visible": visible}
+            for name, visible in dynamic_router.function_visibility.items()
         ]
         return jsonify({"success": True, "routes": registered_functions})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@calculation.route('/uploaded/available', methods=['GET'])
+@login_required
+def list_visible_functions():
+    """
+    API endpoint to list visible functions for normal users.
+    """
+    try:
+        visible_functions = dynamic_router.get_visible_functions()
+        print(visible_functions)
+        return jsonify({"success": True, "functions": visible_functions})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@calculation.route('/uploaded/visibility', methods=['PUT'])
+@admin_required
+def update_function_visibility():
+    """
+    API endpoint to update the visibility of a specific function.
+    """
+    try:
+        data = request.json
+        name = data.get("name")
+        visible = data.get("visible")
+
+        if name is None or visible is None:
+            return jsonify({"success": False, "error": "Invalid parameters"}), 400
+
+        dynamic_router.update_function_visibility(name, visible)
+        return jsonify({"success": True, "message": "Visibility updated successfully"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

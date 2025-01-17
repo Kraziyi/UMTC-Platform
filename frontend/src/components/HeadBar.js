@@ -87,7 +87,6 @@ const HeadBar = ({ username, isAdmin }) => {
           Calculation
         </Button>
 
-        {/* File Upload Button (visible only for admins) */}
         {isAdmin && (
           <Button
             color="inherit"
@@ -99,7 +98,22 @@ const HeadBar = ({ username, isAdmin }) => {
               marginRight: '60px',
             }}
           >
-            Upload File
+            Upload
+          </Button>
+        )}
+
+        {isAdmin && (
+          <Button
+            color="inherit"
+            component={Link}
+            to="/manage-calculation"
+            sx={{
+              color: 'white',
+              textTransform: 'none',
+              marginRight: '60px',
+            }}
+          >
+            Manage
           </Button>
         )}
       </Toolbar>

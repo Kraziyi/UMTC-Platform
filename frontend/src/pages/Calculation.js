@@ -3,7 +3,7 @@ import { Typography, Box, List, ListItem, ListItemText } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import CustomButton from '../components/CustomButton';
 import Layout from '../components/Layout';
-import { getUploadedFunctions } from '../services/api';
+import { getAvailableFunctions } from '../services/api';
 
 const Calculation = () => {
   const navigate = useNavigate();
@@ -17,8 +17,8 @@ const Calculation = () => {
   useEffect(() => {
     const fetchFunctions = async () => {
       try {
-        const response = await getUploadedFunctions();
-        setFunctions(response.data.routes || []);
+        const response = await getAvailableFunctions();
+        setFunctions(response.data.functions || []);
       } catch (err) {
         setError('Failed to fetch registered functions.');
       }
@@ -45,7 +45,7 @@ const Calculation = () => {
           {error ? (
             <Typography color="error">{error}</Typography>
           ) : functions.length === 0 ? (
-            <Typography>No functions uploaded yet.</Typography>
+            <Typography>No functions available yet.</Typography>
           ) : (
             <List>
               {functions.map((func, index) => (

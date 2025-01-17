@@ -65,6 +65,18 @@ export const getUploadedFunctions = async () => {
   return await axios.get(`${API_BASE_URL}/calculation/uploaded`, { withCredentials: true });
 };
 
+export const getAvailableFunctions = () => {
+  return axios.get(`${API_BASE_URL}/calculation/uploaded/available`, { withCredentials: true });
+};
+
+export const updateFunctionVisibility = (name, visible) => {
+  return axios.put(
+    `${API_BASE_URL}/calculation/uploaded/visibility`,
+    { name, visible },
+    { withCredentials: true }
+  );
+};
+
 export const invokeFunction = async (functionName, data) => {
   return await axios.post(`${API_BASE_URL}/calculation/${functionName}`, data, { withCredentials: true });
 };
