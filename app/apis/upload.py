@@ -1,11 +1,12 @@
 import os
 from flask import Blueprint, request, jsonify
-from app.utils.upload import save_uploaded_file, validate_python_file
-from app.utils.dynamic_router import dynamic_router
+from app.utils import save_uploaded_file, validate_python_file, dynamic_router
+from app.utils.decorators import admin_required
 
 upload = Blueprint("upload", __name__)
 
 @upload.route("/", methods=["POST"])
+@admin_required
 def upload_file():
     if "file" not in request.files:
         return jsonify({"success": False, "message": "No file part"}), 400

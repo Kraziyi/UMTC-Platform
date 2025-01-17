@@ -5,7 +5,7 @@ import json
 import inspect
 from app import db
 from app.models import History
-from app.utils import diffusion_solver, dynamic_router
+from app.utils import diffusion_solver, dynamic_router, convert_to_serializable
 
 calculation = Blueprint('calculation', __name__)
 
@@ -58,6 +58,7 @@ def diffusion():
     
 
 @calculation.route("/<function_name>", methods=["POST"])
+@login_required
 def call_dynamic_function(function_name):
     """
     Call a dynamically registered function by name.
@@ -69,7 +70,8 @@ def call_dynamic_function(function_name):
         return jsonify({"success": False, "error": "Invalid input. Parameters must be numeric."}), 400
     try:
         result = dynamic_router.call_function(function_name, **converted_data)
-        return jsonify({"success": True, "result": result})
+        serializable_result = convert_to_serializable(result)
+        return jsonify({"success": True, "result": serializable_result})
     except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 404
     except Exception as e:
@@ -77,6 +79,7 @@ def call_dynamic_function(function_name):
 
 
 @calculation.route("/describe/<function_name>", methods=["GET"])
+@login_required
 def describe_function(function_name):
     """
     Get the parameter details of a registered function.
@@ -99,6 +102,7 @@ def describe_function(function_name):
 
 
 @calculation.route('/uploaded', methods=['GET'])
+@login_required
 def list_functions():
     """
     API endpoint to list all uploaded functions.

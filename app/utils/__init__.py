@@ -1,3 +1,3 @@
 from .solid_diffusion import diffusion_solver, diffusion_solver_casadi
 from .dynamic_router import dynamic_router
-from .upload import save_uploaded_file, validate_python_file
+from .upload import save_uploaded_file, validate_python_file, convert_to_serializable

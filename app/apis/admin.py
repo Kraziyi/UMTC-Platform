@@ -4,32 +4,25 @@ from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 from app import db
 from app.models import History, User
+from app.utils.decorators import admin_required
 
 admin = Blueprint('admin', __name__)
 
 @admin.route('/')
-@login_required
+@admin_required
 def index():
-    if not current_user.is_admin:
-        return jsonify({"error": "You are not an admin"}), 403
     return jsonify({"message": "Welcome to the admin panel"}), 200
 
 @admin.route('/users')
-@login_required
+@admin_required
 def users():
-    if not current_user.is_admin:
-        return jsonify({"error": "You are not an admin"}), 403
-    
     users = User.query.all()
     user_data = [{"id": user.id, "username": user.username, "email": user.email} for user in users]
     return jsonify({"users": user_data}), 200
 
 @admin.route('/user/<int:user_id>')
-@login_required
+@admin_required
 def user(user_id):
-    if not current_user.is_admin:
-        return jsonify({"error": "You are not an admin"}), 403
-
     user = User.query.get_or_404(user_id)
     history = History.query.filter_by(user_id=user_id).order_by(History.timestamp.desc()).all()
     history_data = [{
