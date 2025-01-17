@@ -3,8 +3,9 @@ import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
 import { ReactComponent as HeadLogo } from '../logo.svg';
 
-const HeadBar = ({ username }) => {
+const HeadBar = ({ username, isAdmin }) => {
   const location = useLocation();
+
   return (
     <AppBar position="static" sx={{ backgroundColor: '#00274C', height: '65px' }}>
       <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -14,14 +15,14 @@ const HeadBar = ({ username }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginLeft: '100px', 
+            marginLeft: '100px',
           }}
         >
           <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
             <HeadLogo
               style={{
-                height: '50px',  
-                width: '50px', 
+                height: '50px',
+                width: '50px',
                 marginRight: '15px',
                 cursor: 'pointer',
               }}
@@ -50,8 +51,8 @@ const HeadBar = ({ username }) => {
             sx={{
               color: location.pathname === '/user' ? '#f0f0f0' : 'white',
               textTransform: 'none',
-              marginLeft: '600px',
-              marginRight: '40px',
+              marginLeft: '800px',
+              marginRight: '60px',
             }}
           >
             {username}
@@ -80,11 +81,27 @@ const HeadBar = ({ username }) => {
           sx={{
             color: location.pathname === '/calculation' ? '#f0f0f0' : 'white',
             textTransform: 'none',
-            marginRight: '100px',
+            marginRight: '60px',
           }}
         >
           Calculation
         </Button>
+
+        {/* File Upload Button (visible only for admins) */}
+        {isAdmin && (
+          <Button
+            color="inherit"
+            component={Link}
+            to="/file-upload"
+            sx={{
+              color: 'white',
+              textTransform: 'none',
+              marginRight: '60px',
+            }}
+          >
+            Upload File
+          </Button>
+        )}
       </Toolbar>
     </AppBar>
   );

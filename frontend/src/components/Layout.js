@@ -2,32 +2,38 @@ import React, { useEffect, useState } from 'react';
 import { Typography, Box } from '@mui/material';
 import HeadBar from './HeadBar';
 import FootBar from './FootBar';
-import { getCurrentUsername } from '../services/api';
+import { checkIfUserIsAdmin, getCurrentUsername } from '../services/api';
 
 const Layout = ({ children, title, subTitle }) => {
   const [username, setUsername] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchUsername = async () => {
+    const fetchUserInfo = async () => {
       try {
-        const response = await getCurrentUsername();
-        setUsername(response.data.username);
+        const usernameResponse = await getCurrentUsername();
+        setUsername(usernameResponse.data.username);
+        
+        const adminResponse = await checkIfUserIsAdmin();
+        setIsAdmin(adminResponse.data.is_admin);
       } catch (error) {
         if (error.response && error.response.status === 401) {
           setUsername(null);
+          setIsAdmin(false);
         } else {
           setError('Could not retrieve user information');
         }
       }
     };
-    fetchUsername();
+
+    fetchUserInfo();
   }, []);
 
   return (
     <>
       <Box sx={{ backgroundColor: '#FFCB05', height: '20px', width: '100%' }}></Box>
-      <HeadBar username={username} />
+      <HeadBar username={username} isAdmin={isAdmin} />
 
       {/* Main Content */}
       <Box sx={{ padding: '2rem', minHeight: '60vh', backgroundColor: '#f5f5f5', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>

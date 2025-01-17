@@ -39,7 +39,7 @@ const Calculation = () => {
         {/* New Section: Uploaded Functions */}
         <Box sx={{ width: '100%', marginTop: 4 }}>
           <Typography variant="h6" sx={{ marginBottom: 2 }}>
-            Uploaded Functions
+            Uploaded Functions:
           </Typography>
 
           {error ? (

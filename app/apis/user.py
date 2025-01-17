@@ -120,13 +120,19 @@ def unauthorized():
 def get_username():
     return jsonify({"username": current_user.username}), 200
 
+@user.route('/info/current/admin', methods=['GET'])
+@login_required
+def get_admin_status():
+    return jsonify({"is_admin": current_user.is_admin}), 200
+
 @user.route('info/current', methods=['GET'])
 @login_required
 def get_user_info():
     return jsonify({
         "username": current_user.username,
         "email": current_user.email,
-        "subscription_end": current_user.subscription_end.isoformat() if current_user.is_subscribed() else None
+        "subscription_end": current_user.subscription_end.isoformat() if current_user.is_subscribed() else None,
+        "is_admin": current_user.is_admin
     })
 
 @user.route('/logout', methods=['POST'])

@@ -35,7 +35,7 @@ const Login = () => {
     try {
       const response = await login(username, password, rememberMe);
       setMessage(response.data.message);
-      navigate('/calculation/diffusion');
+      navigate('/calculation');
     } catch (error) {
       setMessage(error.response?.data.error || 'Error logging in');
     } finally {

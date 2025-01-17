@@ -18,6 +18,7 @@ def validate_python_file(filepath):
     Validate if the uploaded file is a Python script and extract callable functions.
     """
     try:
+        #TODO: More validation checks for security.
         module_name = os.path.splitext(os.path.basename(filepath))[0]
         spec = importlib.util.spec_from_file_location(module_name, filepath)
         module = importlib.util.module_from_spec(spec)
