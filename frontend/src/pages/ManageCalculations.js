@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Box, List, ListItem, ListItemText, Switch } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { getUploadedFunctions, updateFunctionVisibility, checkIfUserIsAdmin } from '../services/api';
 
@@ -8,18 +9,19 @@ const ManageCalculation = () => {
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const verifyAdmin = async () => {
       try {
         const response = await checkIfUserIsAdmin();
-        setIsAdmin(response.data.is_admin);
-
         if (!response.data.is_admin) {
           setError('You need admin privileges to perform this action.');
-        } else {
-          await fetchFunctions();
+          setTimeout(() => navigate('/'), 2000);
+          return;
         }
+        setIsAdmin(true);
+        await fetchFunctions();
       } catch (err) {
         setError('Failed to verify admin privileges.');
       } finally {
@@ -37,7 +39,7 @@ const ManageCalculation = () => {
     };
 
     verifyAdmin();
-  }, []);
+  }, [navigate]);
 
   const handleToggle = async (endpoint, visible) => {
     try {

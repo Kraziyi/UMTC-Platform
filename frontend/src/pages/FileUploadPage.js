@@ -1,12 +1,37 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Button, Typography, LinearProgress } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { uploadFile } from '../services/api';
+import { uploadFile, checkIfUserIsAdmin } from '../services/api';
 
 const FileUploadPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState('');
   const [progress, setProgress] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const verifyAdmin = async () => {
+      try {
+        const response = await checkIfUserIsAdmin();
+        if (!response.data.is_admin) {
+          setError('You need admin privileges to access this page.');
+          setTimeout(() => navigate('/'), 2000);
+          return;
+        }
+        setIsAdmin(true);
+      } catch (err) {
+        setError('Failed to verify admin privileges.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    verifyAdmin();
+  }, [navigate]);
 
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);
@@ -18,20 +43,20 @@ const FileUploadPage = () => {
       setUploadStatus('Please select a file first.');
       return;
     }
-  
+
     try {
       setProgress(0);
       setUploadStatus('Uploading...');
-  
+
       const response = await uploadFile(selectedFile);
-  
+
       setUploadStatus(
         `Upload successful! Registered routes: ${response.data.routes.join(', ')}`
       );
       setSelectedFile(null);
     } catch (error) {
       let errorMessage = 'An unexpected error occurred. Please try again.';
-      
+
       if (error.response) {
         if (error.response.status === 403) {
           errorMessage = 'Upload failed: You need admin privileges to perform this action.';
@@ -39,11 +64,26 @@ const FileUploadPage = () => {
           errorMessage = `Upload failed: ${error.response.data.message}`;
         }
       }
-  
+
       setUploadStatus(errorMessage);
     }
   };
-  
+
+  if (loading) {
+    return (
+      <Layout title="File Upload">
+        <Typography>Loading...</Typography>
+      </Layout>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <Layout title="Access Denied">
+        <Typography color="error">{error}</Typography>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="File Upload" subTitle="Upload Python Files">
