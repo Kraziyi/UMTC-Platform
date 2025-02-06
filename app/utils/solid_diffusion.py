@@ -2,6 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import casadi as ca
 
+def calculate_temperature_influence(x0, Ea=50000, T=313):
+    T_ref = 293
+    R = 8.41
+    x = x0 * np.exp(Ea * (1 / T_ref - 1 / T) / R)
+    return x
+
 def diffusion_solver(d, r, ns):
     """
     Traditional solver using numpy

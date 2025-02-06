@@ -47,8 +47,8 @@ export const viewHistory = () => {
   return axios.get(`${API_BASE_URL}/history`, { withCredentials: true });
 };
 
-export const diffusion = (d, r, ns) => {
-  return axios.post(`${API_BASE_URL}/calculation/diffusion`, { d, r, ns }, { withCredentials: true });
+export const diffusion = (d, r, ns, temp_influenced) => {
+  return axios.post(`${API_BASE_URL}/calculation/diffusion`, { d, r, ns, temp_influenced }, { withCredentials: true });
 }
 
 export const uploadFile = (file) => {

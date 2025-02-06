@@ -5,7 +5,7 @@ import json
 import inspect
 from app import db
 from app.models import History
-from app.utils import diffusion_solver, dynamic_router, convert_to_serializable
+from app.utils import diffusion_solver, dynamic_router, convert_to_serializable, calculate_temperature_influence
 from app.utils.decorators import admin_required
 
 calculation = Blueprint('calculation', __name__)
@@ -17,18 +17,20 @@ def diffusion():
     d = data.get('d')
     r = data.get('r')
     ns = data.get('ns')
+    temp_influenced = data.get('temp_influenced')
 
     if d is None or r is None or ns is None:
         return jsonify({"error": "Missing required parameters"}), 400
 
     try:
+        if temp_influenced:
+            d = calculate_temperature_influence(d)
         # Run the diffusion solver function
         rp_disc, cs_iter, loss_value = diffusion_solver(d, r, ns)
 
         # Convert NumPy arrays to lists for JSON serialization
         rp_disc = rp_disc.tolist()
         cs_iter = cs_iter.tolist()
-
         
         # Prepare input and output for storage
         input_data = json.dumps({"d": d, "r": r, "ns": ns})
