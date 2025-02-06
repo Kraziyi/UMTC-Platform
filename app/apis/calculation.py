@@ -73,8 +73,7 @@ def call_dynamic_function(function_name):
         return jsonify({"success": False, "error": "Invalid input. Parameters must be numeric."}), 400
     try:
         result = dynamic_router.call_function(function_name, **converted_data)
-        serializable_result = convert_to_serializable(result)
-        return jsonify({"success": True, "result": serializable_result})
+        return jsonify({"success": True, "result": result})
     except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 404
     except Exception as e:

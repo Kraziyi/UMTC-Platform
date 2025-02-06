@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { TextField, CircularProgress, Typography, Box, Table, TableBody, TableCell, TableContainer, TableRow, Paper } from "@mui/material";
+import { TextField, CircularProgress, Typography, Box } from "@mui/material";
 import CustomButton from "../components/CustomButton";
 import { invokeFunction, describeFunction } from "../services/api";
 import Layout from "../components/Layout";
 import { Line } from "react-chartjs-2";
 import { CategoryScale, LinearScale, LineElement, PointElement, LineController, Chart } from "chart.js";
 
+// 注册 Chart.js 组件
 Chart.register(CategoryScale, LinearScale, LineElement, PointElement, LineController);
 
 const FunctionInvoke = () => {
@@ -55,38 +56,31 @@ const FunctionInvoke = () => {
       if (response.data.success) {
         const resultData = response.data.result;
 
-        // 自动解析结果的类型并存储
-        if (Array.isArray(resultData) && resultData.length > 0) {
-          // 判断是否为图表数据
-          if (resultData.length === 3 && Array.isArray(resultData[0]) && Array.isArray(resultData[1])) {
-            setResult({
-              type: "chart",
-              data: {
-                labels: resultData[0],
-                datasets: [
-                  {
-                    label: "Dataset",
-                    data: resultData[1],
-                    borderColor: "blue",
-                    backgroundColor: "lightblue",
-                  },
-                ],
-              },
-              loss: resultData[2],
-            });
-          } else {
-            // 如果是二维数组，则展示为表格
-            setResult({
-              type: "table",
-              data: resultData,
-            });
-          }
-        } else {
-          // 处理为普通文本结果
+        if (resultData.type === "chart") {
+          const { x_axis, y_axis } = resultData.data;
+          setResult({
+            type: "chart",
+            data: {
+              labels: x_axis,
+              datasets: [
+                {
+                  label: y_axis,
+                  data: y_axis,
+                  borderColor: "blue",
+                  backgroundColor: "lightblue",
+                },
+              ],
+            },
+            metadata: resultData.metadata,
+          });
+        } else if (resultData.type === "text") {
           setResult({
             type: "text",
-            data: resultData,
+            data: resultData.data,
+            metadata: resultData.metadata,
           });
+        } else {
+          setError("Unsupported result type.");
         }
       } else {
         setError(response.data.error);
@@ -130,40 +124,32 @@ const FunctionInvoke = () => {
       </form>
 
       {result !== null && (
-        <Box sx={{ marginTop: "20px", textAlign: "center" }}>
-          {result.type === "text" && (
-            <>
-              <Typography variant="h6">Result:</Typography>
-              <Typography>{JSON.stringify(result.data)}</Typography>
-            </>
-          )}
-          {result.type === "table" && (
-            <TableContainer component={Paper} sx={{ marginTop: "20px" }}>
-              <Table>
-                <TableBody>
-                  {result.data.map((row, rowIndex) => (
-                    <TableRow key={rowIndex}>
-                      {row.map((cell, cellIndex) => (
-                        <TableCell key={cellIndex}>{cell}</TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+        <Box sx={{ marginTop: "20px", marginBottom: "60px", textAlign: "center" }}>
           {result.type === "chart" && (
-            <Box sx={{ margin: "20px auto", width: "900px", height: "600px", textAlign: "center" }}>
+            <Box sx={{ margin: "20px auto", width: "900px", height: "600px" }}>
               <Typography variant="h6" sx={{ marginBottom: "20px" }}>
-                Loss Value: {result.loss}
+                {result.metadata.description || "Chart Data"}
               </Typography>
-              <Line
-                data={result.data}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                }}
-              />
+              <Typography variant="body1" sx={{ marginBottom: "20px" }}>
+                Loss Value: {result.metadata.loss_value}
+              </Typography>
+              <Line data={result.data} options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  x: { title: { display: true, text: result.metadata.x_label } },
+                  y: { title: { display: true, text: result.metadata.y_label } },
+                },
+              }} />
+            </Box>
+          )}
+
+          {result.type === "text" && (
+            <Box sx={{ margin: "20px auto", textAlign: "center" }}>
+              <Typography variant="h6" sx={{ marginBottom: "20px" }}>
+                {result.metadata.description || "Text Result"}
+              </Typography>
+              <Typography>{result.data}</Typography>
             </Box>
           )}
         </Box>
