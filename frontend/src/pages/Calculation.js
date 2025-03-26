@@ -14,6 +14,10 @@ const Calculation = () => {
     navigate('/calculation/diffusion');
   };
 
+  const handleDiffusionAnimationClick = () => {
+    navigate('/calculation/diffusion-animation');
+  };
+
   useEffect(() => {
     const fetchFunctions = async () => {
       try {
@@ -34,6 +38,9 @@ const Calculation = () => {
         <Typography variant="h6">Choose a Calculation Method:</Typography>
         <CustomButton onClick={handleDiffusionClick} color="primary">
           Diffusion
+        </CustomButton>
+        <CustomButton onClick={handleDiffusionAnimationClick} color="primary">
+          Diffusion Animation
         </CustomButton>
 
         {/* New Section: Uploaded Functions */}

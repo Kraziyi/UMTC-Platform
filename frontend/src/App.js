@@ -8,9 +8,12 @@ import User from './pages/User';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import History from './pages/History';
+import HistoryView from './pages/HistoryView';
+import HistorySearch from './pages/HistorySearch';
 
 import Calculation from './pages/Calculation';
 import Diffusion from './pages/Diffusion';
+import DiffusionAnimation from './pages/DiffusionAnimation';
 
 import FileUploadPage from './pages/FileUploadPage';
 import FunctionInvoker from './pages/FunctionInvoker';
@@ -29,9 +32,12 @@ function App() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/subscription" element={<Subscription />} />
         <Route path="/history" element={<History />} />
+        <Route path="/history/:id" element={<HistoryView />} />
+        <Route path="/history/search" element={<HistorySearch />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/calculation" element={<Calculation />} />
         <Route path="/calculation/diffusion" element={<Diffusion />} />
+        <Route path="/calculation/diffusion-animation" element={<DiffusionAnimation />} />
         <Route path="/file-upload" element={<FileUploadPage />} />
         <Route path="/functions/:functionName" element={<FunctionInvoker />} />
         <Route path="/manage-calculation" element={<ManageCalculation />} />

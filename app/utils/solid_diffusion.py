@@ -153,6 +153,75 @@ def diffusion_solver_casadi(D, R, Ns):
     return rp_disc, cs_sol, residual
 
 
+def diffusion_2d_solver(nx, ny, dt, d, t_max):
+    dx = dy = 0.1 / nx
+    r = d * dt / dx**2
+
+    # Initial condition: top half is 1, bottom half is -1
+    u = np.zeros((nx, ny))
+    u[:, ny//2:] = 1
+    u[:, :ny//2] = -1
+
+    # Thomas algorithm to solve tridiagonal system
+    def thomas_solver(a, b, c, d_vec):
+        n = len(d_vec)
+        c_star = np.empty(n-1)
+        d_star = np.empty(n)
+        x = np.empty(n)
+        d_star[0] = d_vec[0] / b[0]
+        for i in range(1, n):
+            denom = b[i] - a[i-1] * (c_star[i-1] if i-1 >= 0 else 0)
+            if i < n-1:
+                c_star[i] = c[i] / denom
+            d_star[i] = (d_vec[i] - a[i-1] * d_star[i-1]) / denom
+        x[-1] = d_star[-1]
+        for i in range(n-2, -1, -1):
+            x[i] = d_star[i] - c_star[i] * x[i+1]
+        return x
+
+    # ADI first half step: update along x direction
+    def adi_step1(u):
+        u_star = u.copy()
+        # Coefficients: main diagonal is 1+r, upper and lower diagonals are -r/2
+        a_coef = -0.5 * r * np.ones(nx-1)
+        b_coef = (1 + r) * np.ones(nx)
+        c_coef = -0.5 * r * np.ones(nx-1)
+        for j in range(1, ny-1):
+            d_vec = u[:, j] + 0.5 * r * (u[:, j+1] - 2*u[:, j] + u[:, j-1])
+            d_vec[0] = u[0, j]
+            d_vec[-1] = u[-1, j]
+            sol = thomas_solver(a_coef, b_coef, c_coef, d_vec)
+            u_star[:, j] = sol
+        return u_star
+
+    # ADI second half step: update along y direction
+    def adi_step2(u_star):
+        u_new = u_star.copy()
+        a_coef = -0.5 * r * np.ones(ny-1)
+        b_coef = (1 + r) * np.ones(ny)
+        c_coef = -0.5 * r * np.ones(ny-1)
+        for i in range(1, nx-1):
+            d_vec = u_star[i, :] + 0.5 * r * (u_star[i+1, :] - 2*u_star[i, :] + u_star[i-1, :])
+            d_vec[0] = u_star[i, 0]
+            d_vec[-1] = u_star[i, -1]
+            sol = thomas_solver(a_coef, b_coef, c_coef, d_vec)
+            u_new[i, :] = sol
+        return u_new
+
+    def adi_step(u):
+        u_star = adi_step1(u)
+        u_new = adi_step2(u_star)
+        return u_new
+
+    nt = int(t_max / dt)
+    frames = []
+    for _ in range(nt):
+        u = adi_step(u)
+        frames.append(u.tolist())
+    print(f"Final frame min: {np.min(u)}, max: {np.max(u)}")
+
+    return frames, nt, nx, ny
+
 if __name__ == "__main__":
     # Parameters
     D = 1e-12  

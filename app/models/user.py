@@ -2,19 +2,24 @@ from app import db, login_manager
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta, timezone
+from app.models.folder import Folder
 
 class User(UserMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
-    password_hash = db.Column(db.String(128))
+    password_hash = db.Column(db.String(512))
     is_admin = db.Column(db.Boolean, default=False)
     subscription_end = db.Column(db.DateTime(timezone=True), nullable=True)
     histories = db.relationship('History', backref='user', lazy='dynamic')
+    folders = db.relationship('Folder', backref='user', lazy='dynamic', foreign_keys=[Folder.user_id])
+    storage_used = db.Column(db.Integer, default=0)
+    storage_limit = db.Column(db.Integer, default=1000000000) # 1 GB
+    default_folder_id = db.Column(db.Integer, db.ForeignKey('folder.id'))
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = generate_password_hash(password, salt_length=16)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)

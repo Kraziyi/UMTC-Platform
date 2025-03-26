@@ -1,12 +1,16 @@
-
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, Response
 from flask_login import login_required, current_user
 import json
 import inspect
+import io
+import csv
+import gzip
+import numpy as np
 from app import db
 from app.models import History
-from app.utils import diffusion_solver, dynamic_router, convert_to_serializable, calculate_temperature_influence
+from app.utils import diffusion_solver, dynamic_router, diffusion_2d_solver, calculate_temperature_influence
 from app.utils.decorators import admin_required
+from app.utils.history import calculate_history_size
 
 calculation = Blueprint('calculation', __name__)
 
@@ -18,13 +22,16 @@ def diffusion():
     r = data.get('r')
     ns = data.get('ns')
     temp_influenced = data.get('temp_influenced')
+    name = data.get('name')
 
     if d is None or r is None or ns is None:
         return jsonify({"error": "Missing required parameters"}), 400
 
     try:
+        calculation_type = 'diffusion'
         if temp_influenced:
             d = calculate_temperature_influence(d)
+            calculation_type = 'diffusion_temp_influenced'
         # Run the diffusion solver function
         rp_disc, cs_iter, loss_value = diffusion_solver(d, r, ns)
 
@@ -33,21 +40,36 @@ def diffusion():
         cs_iter = cs_iter.tolist()
         
         # Prepare input and output for storage
-        input_data = json.dumps({"d": d, "r": r, "ns": ns})
-        output_data = json.dumps({
+        input_data = {"d": d, "r": r, "ns": ns}
+        output_data = {
             "rp_disc": rp_disc,
             "cs_iter": cs_iter,
             "loss_value": loss_value
-        })
+        }
+
+        # Calculate size of the history entry
+        history_size = calculate_history_size(input_data, output_data)
+
+        # Check if user has enough storage space
+        if current_user.storage_used + history_size > current_user.storage_limit:
+            return jsonify({"error": "Storage limit exceeded"}), 400
 
         # Store the input and output in History
         user_id = current_user.id
+        default_folder_id = current_user.default_folder_id
         history_entry = History(
             user_id=user_id,
-            input=input_data,
-            output=output_data
+            folder_id=default_folder_id,
+            type=calculation_type,
+            input=json.dumps(input_data),
+            output=json.dumps(output_data),
+            name=name if name else None,
+            size=history_size
         )
         db.session.add(history_entry)
+        
+        # Update user's storage usage
+        current_user.storage_used += history_size
         db.session.commit()
 
         # Return the output to the user
@@ -57,6 +79,7 @@ def diffusion():
             "loss_value": loss_value
         })
     except Exception as e:
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
     
 
@@ -149,3 +172,126 @@ def update_function_visibility():
         return jsonify({"success": True, "message": "Visibility updated successfully"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@calculation.route('/diffusion/batch', methods=['POST'])
+@login_required
+def batch_diffusion():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+        
+    file = request.files['file']
+    if not file.filename.endswith('.csv'):
+        return jsonify({"error": "Only support csv"}), 400
+
+    try:
+        stream = io.StringIO(file.stream.read().decode('UTF-8'))
+        reader = csv.DictReader(stream)
+        
+        required_columns = {'d', 'r', 'ns', 'temp_influenced'}
+        if not required_columns.issubset(reader.fieldnames):
+            missing = required_columns - set(reader.fieldnames)
+            return jsonify({"error": f"missing: {', '.join(missing)}"}), 400
+
+        results = []
+        total_size = 0
+        history_entries = []
+
+        for row in reader:
+            try:
+                params = {
+                    'd': float(row['d']),
+                    'r': float(row['r']),
+                    'ns': int(row['ns']),
+                    'temp_influenced': row['temp_influenced'].lower() in ['true', '1', 'yes']
+                }
+            except ValueError as e:
+                return jsonify({"error": f"error in line {reader.line_num}: {str(e)}"}), 400
+
+            try:
+                calculation_type = 'diffusion'
+                if params['temp_influenced']:
+                    params['d'] = calculate_temperature_influence(params['d'])
+                    calculation_type = 'diffusion_temp_influenced'
+                
+                # Only use the first 3 parameters
+                params = {k: v for k, v in params.items() if k in ['d', 'r', 'ns']}
+                rp_disc, cs_iter, loss_value = diffusion_solver(**params)
+                
+                output_data = {
+                    "rp_disc": rp_disc.tolist(),
+                    "cs_iter": cs_iter.tolist(),
+                    "loss_value": loss_value
+                }
+
+                # Calculate size for this entry
+                entry_size = calculate_history_size(params, output_data)
+                total_size += entry_size
+
+                history_entry = History(
+                    user_id=current_user.id,
+                    folder_id=current_user.default_folder_id,
+                    type=calculation_type,
+                    input=json.dumps(params),
+                    output=json.dumps(output_data),
+                    size=entry_size
+                )
+                history_entries.append(history_entry)
+                
+                results.append(output_data)
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"error": f"error in line {reader.line_num}: {str(e)}"}), 500
+
+        # Check if user has enough storage space for all entries
+        if current_user.storage_used + total_size > current_user.storage_limit:
+            return jsonify({"error": "Storage limit exceeded"}), 400
+
+        # Add all history entries and update user storage
+        for entry in history_entries:
+            db.session.add(entry)
+        current_user.storage_used += total_size
+        db.session.commit()
+
+        return jsonify({"results": results}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Error: {str(e)}"}), 500
+    
+
+@calculation.route('/diffusion_2d', methods=['POST'])
+@login_required
+def diffusion_2d():
+    data = request.get_json()
+    nx = data.get('nx')
+    ny = data.get('ny')
+    dt = data.get('dt')
+    d = data.get('d')
+    t_max = data.get('t_max')
+
+    if None in {nx, ny, dt, d, t_max}:
+        return jsonify({"error": "Missing required parameters"}), 400
+
+    # try:
+    frames, nt, nx, ny = diffusion_2d_solver(nx, ny, dt, d, t_max)
+
+    response_data = {
+        "metadata": {"nx": nx, "ny": ny, "timesteps": nt},
+        "frames": np.round(frames, decimals=4).tolist()
+    }
+    
+    compressed = gzip.compress(
+        json.dumps(response_data, separators=(',', ':')).encode(),
+        compresslevel=9
+    )
+    print(f"size after compression in mb: {len(compressed) / 1024 / 1024}")
+    return Response(
+        compressed,
+        headers={
+            # 'Content-Encoding': 'gzip',
+            'Content-Type': 'application/json',
+            'Content-Length': len(compressed)
+        },
+        direct_passthrough=True
+    ), 200

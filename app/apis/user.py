@@ -5,7 +5,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from flask_mail import Message
 import jwt
 from app import db, login_manager, mail
-from app.models import User
+from app.models import User, Folder
 from datetime import datetime, timedelta, timezone
 
 user = Blueprint('user', __name__)
@@ -67,6 +67,11 @@ def register():
     user = User(username=username, email=email)
     user.set_password(password)
     db.session.add(user)
+    db.session.flush()
+
+    root_folder = Folder(user_id=user.id, name="root")
+    db.session.add(root_folder)
+
     db.session.commit()
 
     return jsonify({"message": "Registration successful"}), 201
