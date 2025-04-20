@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import casadi as ca
+import os
 
 def calculate_temperature_influence(x0, Ea=50000, T=313):
     T_ref = 293
@@ -152,75 +153,158 @@ def diffusion_solver_casadi(D, R, Ns):
     rp_disc = np.linspace(0, R, Ns + 1)
     return rp_disc, cs_sol, residual
 
-
 def diffusion_2d_solver(nx, ny, dt, d, t_max):
-    dx = dy = 0.1 / nx
-    r = d * dt / dx**2
-
-    # Initial condition: top half is 1, bottom half is -1
-    u = np.zeros((nx, ny))
-    u[:, ny//2:] = 1
-    u[:, :ny//2] = -1
-
-    # Thomas algorithm to solve tridiagonal system
-    def thomas_solver(a, b, c, d_vec):
-        n = len(d_vec)
-        c_star = np.empty(n-1)
-        d_star = np.empty(n)
-        x = np.empty(n)
-        d_star[0] = d_vec[0] / b[0]
-        for i in range(1, n):
-            denom = b[i] - a[i-1] * (c_star[i-1] if i-1 >= 0 else 0)
-            if i < n-1:
-                c_star[i] = c[i] / denom
-            d_star[i] = (d_vec[i] - a[i-1] * d_star[i-1]) / denom
-        x[-1] = d_star[-1]
-        for i in range(n-2, -1, -1):
-            x[i] = d_star[i] - c_star[i] * x[i+1]
-        return x
-
-    # ADI first half step: update along x direction
-    def adi_step1(u):
-        u_star = u.copy()
-        # Coefficients: main diagonal is 1+r, upper and lower diagonals are -r/2
-        a_coef = -0.5 * r * np.ones(nx-1)
-        b_coef = (1 + r) * np.ones(nx)
-        c_coef = -0.5 * r * np.ones(nx-1)
-        for j in range(1, ny-1):
-            d_vec = u[:, j] + 0.5 * r * (u[:, j+1] - 2*u[:, j] + u[:, j-1])
-            d_vec[0] = u[0, j]
-            d_vec[-1] = u[-1, j]
-            sol = thomas_solver(a_coef, b_coef, c_coef, d_vec)
-            u_star[:, j] = sol
-        return u_star
-
-    # ADI second half step: update along y direction
-    def adi_step2(u_star):
-        u_new = u_star.copy()
-        a_coef = -0.5 * r * np.ones(ny-1)
-        b_coef = (1 + r) * np.ones(ny)
-        c_coef = -0.5 * r * np.ones(ny-1)
-        for i in range(1, nx-1):
-            d_vec = u_star[i, :] + 0.5 * r * (u_star[i+1, :] - 2*u_star[i, :] + u_star[i-1, :])
-            d_vec[0] = u_star[i, 0]
-            d_vec[-1] = u_star[i, -1]
-            sol = thomas_solver(a_coef, b_coef, c_coef, d_vec)
-            u_new[i, :] = sol
-        return u_new
-
-    def adi_step(u):
-        u_star = adi_step1(u)
-        u_new = adi_step2(u_star)
-        return u_new
-
+    """
+    Solve 2D diffusion equation with initial condition of step function
+    Returns frames as RGB color data
+    """
+    print(f"Starting 2D diffusion solver with parameters: nx={nx}, ny={ny}, dt={dt}, d={d}, t_max={t_max}")
+    
+    # Calculate grid spacing
+    dx = dy = 1.0 / nx
+    
+    # Calculate maximum stable time step
+    dt_max = dx**2 / (4 * d)
+    dt = min(0.9 * dt_max, dt)  # ensure stability
+    print(f"Adjusted dt for stability: {dt} (max stable dt: {dt_max})")
+    
+    # Calculate number of time steps
     nt = int(t_max / dt)
+    print(f"Number of time steps: {nt}")
+    
+    # Initialize field with step function
+    u = np.zeros((nx, ny))
+    for i in range(nx):
+        for j in range(ny):
+            if j >= ny // 2:
+                u[i, j] = 1  # upper part
+            else:
+                u[i, j] = -1  # lower part
+    
+    # Store frames as RGB data
     frames = []
-    for _ in range(nt):
-        u = adi_step(u)
-        frames.append(u.tolist())
-    print(f"Final frame min: {np.min(u)}, max: {np.max(u)}")
+    
+    # Time stepping
+    for step in range(nt):
+        u_new = u.copy()
+        for i in range(1, nx - 1):
+            for j in range(1, ny - 1):
+                laplacian = (u[i+1, j] - 2*u[i, j] + u[i-1, j]) / dx**2 + \
+                           (u[i, j+1] - 2*u[i, j] + u[i, j-1]) / dy**2
+                u_new[i, j] = np.clip(u[i, j] + d * dt * laplacian, -1, 1)
+        u = u_new
+        
+        # Convert to RGB data
+        rgb_frame = np.zeros((nx, ny, 3), dtype=np.uint8)
+        for i in range(nx):
+            for j in range(ny):
+                value = u[i, j]
+                if value < 0:
+                    # Blue to white
+                    t = abs(value)
+                    rgb_frame[i, j] = [int(255 * t), int(255 * t), 255]
+                else:
+                    # White to red
+                    t = value
+                    rgb_frame[i, j] = [255, int(255 * (1 - t)), int(255 * (1 - t))]
+        
+        frames.append(rgb_frame.tolist())
 
     return frames, nt, nx, ny
+
+def diffusion_2d_solver_alt(nx=50, ny=50, dt=0.001, d=1.0, t_max=9e-3):
+    """
+    Solve 2D diffusion equation with initial condition of step function
+    Returns frames as RGB color data and metadata
+    
+    Parameters:
+    -----------
+    nx : int, optional
+        Number of grid points in x direction (default 50)
+    ny : int, optional
+        Number of grid points in y direction (default 50)
+    dt : float, optional
+        Time step (default 0.001)
+    d : float, optional
+        Diffusion coefficient (default 1.0)
+    t_max : float, optional
+        Maximum simulation time (default 9e-3)
+    
+    Returns:
+    --------
+    frames : list of RGB frames
+    nt : int
+        Number of time steps
+    nx : int
+        Grid size in x direction
+    ny : int
+        Grid size in y direction
+    """
+    # Calculate grid spacing
+    dx = dy = 1.0 / nx
+
+    # Largest stable time step calculation
+    dt_max = dx**2 / (4 * d)
+    dt = min(0.9 * dt_max, dt)  # ensure stability
+    print(f"Stable time step: dt = {dt:.5e} (max stable dt: {dt_max:.5e})")
+
+    # Calculate number of time steps
+    nt = int(t_max / dt)
+    print(f"Number of time steps: {nt}")
+
+    # Initialize field with step function
+    u = np.zeros((nx, ny))
+    for i in range(nx):
+        for j in range(ny):
+            if j >= ny // 2:
+                u[i, j] = 1  # upper part
+            else:
+                u[i, j] = -1  # lower part
+
+    # Store frames as RGB data
+    frames = []
+
+    # Time stepping
+    for step in range(nt):
+        # Create a copy for updating
+        u_new = u.copy()
+
+        # Compute diffusion
+        for i in range(1, nx - 1):
+            for j in range(1, ny - 1):
+                # Compute Laplacian
+                laplacian = (u[i+1, j] - 2*u[i, j] + u[i-1, j]) / dx**2 + \
+                            (u[i, j+1] - 2*u[i, j] + u[i, j-1]) / dy**2
+                
+                # Update with diffusion and clip values
+                u_new[i, j] = np.clip(u[i, j] + d * dt * laplacian, -1, 1)
+
+        # Update field
+        u = u_new
+
+        # Convert to RGB data
+        rgb_frame = np.zeros((nx, ny, 3), dtype=np.uint8)
+        for i in range(nx):
+            for j in range(ny):
+                value = u[i, j]
+                if value < 0:
+                    # Blue to white gradient for negative values
+                    t = abs(value)
+                    rgb_frame[i, j] = [int(255 * t), int(255 * t), 255]
+                else:
+                    # White to red gradient for positive values
+                    t = value
+                    rgb_frame[i, j] = [255, int(255 * (1 - t)), int(255 * (1 - t))]
+
+        frames.append(rgb_frame.tolist())
+
+        # Logging for every 10th step
+        if step % 10 == 0:
+            print(f"Step {step}: min={np.min(u):.3f}, max={np.max(u):.3f}")
+
+    print(f"Generated {len(frames)} frames")
+    return frames, nt, nx, ny
+
 
 if __name__ == "__main__":
     # Parameters

@@ -18,6 +18,10 @@ const Calculation = () => {
     navigate('/calculation/diffusion-animation');
   };
 
+  const handleECMClick = () => {
+    navigate('/calculation/ecm');
+  };
+
   useEffect(() => {
     const fetchFunctions = async () => {
       try {
@@ -41,6 +45,9 @@ const Calculation = () => {
         </CustomButton>
         <CustomButton onClick={handleDiffusionAnimationClick} color="primary">
           Diffusion Animation
+        </CustomButton>
+        <CustomButton onClick={handleECMClick} color="primary">
+          ECM
         </CustomButton>
 
         {/* New Section: Uploaded Functions */}

@@ -97,7 +97,7 @@ const DiffusionAnimation = () => {
     const totalSteps = Math.ceil(t_max / dt);
     const gridSize = nx * ny;
     // Rough estimation: each step takes longer with larger grid
-    const timePerStep = gridSize * 0.0001; // milliseconds
+    const timePerStep = gridSize * 0.02;
     return totalSteps * timePerStep;
   };
 
@@ -124,7 +124,6 @@ const DiffusionAnimation = () => {
     progressRef.current = requestAnimationFrame(updateProgress);
 
     try {
-      console.log("Starting request");
       const response = await diffusion2D(params);
       
       // Cancel progress animation
@@ -133,20 +132,25 @@ const DiffusionAnimation = () => {
       }
       setProgress(100);
       
-      console.log('Response:', response);
       if (!(response.data instanceof ArrayBuffer)) {
         throw new Error('Invalid response data');
       }
       
       const compressed = new Uint8Array(response.data);
+      console.log('Compressed data length:', compressed.length);
       
       try {
         const decompressed = pako.ungzip(compressed, { to: 'string' });
-        const { metadata, frames } = JSON.parse(decompressed);
         
-        console.log("Metadata:", metadata);
-        console.log("First frame data:", frames[0]);
-        console.log("Min:", Math.min(...frames[0].flat()), "Max:", Math.max(...frames[0].flat()));
+        const parsedData = JSON.parse(decompressed);
+        const { metadata, frames } = parsedData;
+        
+        // Log sample of first frame
+        const sampleSize = 5;
+        const sample = frames[0].slice(0, sampleSize).map(row => row.slice(0, sampleSize));
+
+        // Calculate statistics for first frame
+        const flatFirstFrame = frames[0].flat();
 
         if (!Array.isArray(frames) || 
             frames[0]?.length !== metadata.nx || 
@@ -169,24 +173,8 @@ const DiffusionAnimation = () => {
       }
   
     } catch (err) {
-      // Cancel progress animation
-      if (progressRef.current) {
-        cancelAnimationFrame(progressRef.current);
-      }
-      
-      console.error('Error:', {
-        error: err,
-        response: err.response
-      });
-      
-      let errorMessage = 'Failed to fetch data';
-      if (err.message.includes('Error decompressing data')) {
-        errorMessage = 'Error decompressing data, please try again';
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      }
-      
-      setError(errorMessage);
+      console.error('Error:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -333,28 +321,9 @@ const DiffusionAnimation = () => {
           overflow: 'hidden',
           boxShadow: 3
         }}>
-          {console.log('Current frame data:', animationData.frames[animationData.currentFrame])}
-          {console.log('Frame dimensions:', {
-            rows: animationData.frames[animationData.currentFrame]?.length,
-            cols: animationData.frames[animationData.currentFrame]?.[0]?.length
-          })}
-          {console.log('Frame min/max:', {
-            min: Math.min(...animationData.frames[animationData.currentFrame].flat()),
-            max: Math.max(...animationData.frames[animationData.currentFrame].flat())
-          })}
           <Heatmap
             data={animationData.frames[animationData.currentFrame]}
             metadata={animationData.metadata}
-            config={{
-              colorscale: [
-                [0, 'rgb(0,0,255)'],
-                [0.5, 'rgb(255,255,255)'],
-                [1, 'rgb(255,0,0)']
-              ],
-              zmin: -1,
-              zmax: 1,
-              origin: 'lower'
-            }}
           />
           
           <Box sx={{

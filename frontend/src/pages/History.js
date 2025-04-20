@@ -261,6 +261,10 @@ const History = () => {
     });
   };
 
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+
   const handleDelete = async () => {
     if (!selectedItem) return;
     
@@ -305,6 +309,13 @@ const History = () => {
     } catch (err) {
       handleError('Rename failed', err);
     }
+  };
+
+  const openRenameDialog = (item) => {
+    setSelectedItem(null);
+    setEditingItem(item);
+    setNewName(item.name || '');
+    setContextMenu(null);
   };
 
   const handleRecalculateStorage = async () => {
@@ -639,6 +650,42 @@ const History = () => {
           </Button>
         )}
       </Box>
+
+      {/* Context Menu */}
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={() => openRenameDialog(selectedItem)}>Rename</MenuItem>
+        <MenuItem onClick={handleDelete}>Delete</MenuItem>
+      </Menu>
+
+      {/* Rename Dialog */}
+      <Dialog open={editingItem !== null} onClose={() => setEditingItem(null)}>
+        <DialogTitle>Rename {editingItem?.type === 'folder' ? 'Folder' : 'History Item'}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Name"
+            type="text"
+            fullWidth
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleRename()}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditingItem(null)}>Cancel</Button>
+          <Button onClick={handleRename} color="primary">Save</Button>
+        </DialogActions>
+      </Dialog>
     </Layout>
   );
 };

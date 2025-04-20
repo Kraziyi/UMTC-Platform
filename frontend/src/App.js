@@ -18,6 +18,7 @@ import DiffusionAnimation from './pages/DiffusionAnimation';
 import FileUploadPage from './pages/FileUploadPage';
 import FunctionInvoker from './pages/FunctionInvoker';
 import ManageCalculation from './pages/ManageCalculations';
+import ECM from './pages/ECM';
 
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
         <Route path="/file-upload" element={<FileUploadPage />} />
         <Route path="/functions/:functionName" element={<FunctionInvoker />} />
         <Route path="/manage-calculation" element={<ManageCalculation />} />
+        <Route path="/calculation/ecm" element={<ECM />} />
       </Routes>
     </Router>
   );

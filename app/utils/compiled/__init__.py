@@ -1,0 +1,1 @@
+from python_ECM_demo_compact_0 import main_solution as ecm_calculation

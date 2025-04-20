@@ -215,3 +215,11 @@ export const getHistory = (historyId) => {
 export const deleteHistory = (historyId) => {
   return axios.delete(`${API_BASE_URL}/history/${normalizeId(historyId)}`, { withCredentials: true });
 };
+
+export const ecm = async (params, folderId) => {
+  const response = await axios.post(`${API_BASE_URL}/calculation/ecm`, {
+    ...params,
+    folder_id: folderId
+  }, { withCredentials: true });
+  return response;
+};

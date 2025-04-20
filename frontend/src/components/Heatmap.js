@@ -1,74 +1,85 @@
-import React from 'react';
-import Plotly from 'plotly.js-basic-dist';
-import createPlotlyComponent from 'react-plotly.js/factory';
+import React, { useEffect, useRef } from 'react';
 
-const Plot = createPlotlyComponent(Plotly);
+const Heatmap = ({ data, metadata }) => {
+  const canvasRef = useRef(null);
 
-const Heatmap = ({ data, metadata, config }) => {
-  if (!data || !metadata) {
-    console.log('Heatmap: Missing data or metadata', { data, metadata });
-    return null;
-  }
+  useEffect(() => {
+    if (!data || !metadata) {
+      console.log('Heatmap: Missing data or metadata', { data, metadata });
+      return;
+    }
 
-  // Ensure data is in the correct format
-  const zData = Array.isArray(data) ? data : [];
-  
-  // Calculate min and max from the actual data
-  const flatData = zData.flat();
-  const computedZmin = Math.min(...flatData);
-  const computedZmax = Math.max(...flatData);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-  console.log('Heatmap: Data stats', {
-    rows: zData.length,
-    cols: zData[0]?.length,
-    min: computedZmin,
-    max: computedZmax,
-    sample: zData[0]?.slice(0, 5)
-  });
+    const ctx = canvas.getContext('2d');
+    const { nx, ny } = metadata;
+
+    // Set canvas size and scale
+    canvas.width = nx;
+    canvas.height = ny;
+    
+    // Scale canvas to fit container
+    const containerWidth = canvas.parentElement.clientWidth;
+    const containerHeight = canvas.parentElement.clientHeight;
+    const scale = Math.min(containerWidth / nx, containerHeight / ny);
+    
+    ctx.scale(scale, scale);
+
+    // Create image data
+    const imageData = ctx.createImageData(nx, ny);
+    const imageDataArray = imageData.data;
+
+    // Convert RGB data to ImageData
+    for (let y = 0; y < ny; y++) {
+      for (let x = 0; x < nx; x++) {
+        const i = (y * nx + x) * 4;
+        const rgb = data[y][x];
+        
+        // Ensure rgb values are within 0-255 range
+        imageDataArray[i] = Math.min(255, Math.max(0, rgb[0]));     // R
+        imageDataArray[i + 1] = Math.min(255, Math.max(0, rgb[1])); // G
+        imageDataArray[i + 2] = Math.min(255, Math.max(0, rgb[2])); // B
+        imageDataArray[i + 3] = 255;    // Alpha
+      }
+    }
+
+    // Draw the image data
+    ctx.putImageData(imageData, 0, 0);
+
+    // Create color scale
+    const scaleHeight = 20;
+    const scaleWidth = 200;
+    const scaleY = ny - scaleHeight - 10;
+    const scaleX = 10;
+
+    // Draw gradient
+    const gradient = ctx.createLinearGradient(scaleX, scaleY, scaleX + scaleWidth, scaleY);
+    gradient.addColorStop(0, 'rgb(0,0,255)');   // Blue
+    gradient.addColorStop(0.5, 'rgb(255,255,255)'); // White
+    gradient.addColorStop(1, 'rgb(255,0,0)');   // Red
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(scaleX, scaleY, scaleWidth, scaleHeight);
+
+    // Add labels
+    ctx.fillStyle = 'black';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('-1', scaleX, scaleY - 5);
+    ctx.textAlign = 'right';
+    ctx.fillText('1', scaleX + scaleWidth, scaleY - 5);
+
+  }, [data, metadata]);
 
   return (
-    <Plot
-      data={[{
-        z: zData,
-        type: 'heatmap',
-        colorscale: config?.colorscale || [
-          [0, 'rgb(0,0,255)'],
-          [0.5, 'rgb(255,255,255)'],
-          [1, 'rgb(255,0,0)']
-        ],
-        zmin: config?.zmin ?? computedZmin,
-        zmax: config?.zmax ?? computedZmax,
-        showscale: true,
-        hoverongaps: false,
-        xgap: 1,
-        ygap: 1,
-        transpose: config?.origin === 'lower',
-        hoverinfo: 'z'
-      }]}
-      layout={{
-        width: 1200,
-        height: 600,
-        margin: { t: 30, b: 40 },
-        xaxis: { 
-          scaleanchor: 'y',
-          title: 'X Axis',
-          showgrid: false,
-          zeroline: false
-        },
-        yaxis: {
-          title: 'Y Axis',
-          showgrid: false,
-          zeroline: false
-        },
-        plot_bgcolor: 'rgba(0,0,0,0.1)',
-        paper_bgcolor: 'rgba(0,0,0,0)'
+    <canvas
+      ref={canvasRef}
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'contain'
       }}
-      config={{
-        staticPlot: false,
-        displayModeBar: true,
-        responsive: true
-      }}
-      style={{ width: '100%', height: '100%' }}
     />
   );
 };

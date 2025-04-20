@@ -8,9 +8,10 @@ import gzip
 import numpy as np
 from app import db
 from app.models import History
-from app.utils import diffusion_solver, dynamic_router, diffusion_2d_solver, calculate_temperature_influence
+from app.utils import diffusion_solver, dynamic_router, diffusion_2d_solver, calculate_temperature_influence, diffusion_2d_solver_alt
 from app.utils.decorators import admin_required
 from app.utils.history import calculate_history_size
+from app.utils.compiled import ecm_calculation
 
 calculation = Blueprint('calculation', __name__)
 
@@ -274,7 +275,7 @@ def diffusion_2d():
         return jsonify({"error": "Missing required parameters"}), 400
 
     # try:
-    frames, nt, nx, ny = diffusion_2d_solver(nx, ny, dt, d, t_max)
+    frames, nt, nx, ny = diffusion_2d_solver_alt(nx, ny, dt, d, t_max)
 
     response_data = {
         "metadata": {"nx": nx, "ny": ny, "timesteps": nt},
@@ -295,3 +296,89 @@ def diffusion_2d():
         },
         direct_passthrough=True
     ), 200
+
+@calculation.route('/ecm', methods=['POST'])
+@login_required
+def ecm():
+    data = request.get_json()
+    t_tot = data.get('t_tot')
+    dt = data.get('dt')
+    Cn = data.get('Cn')
+    SOC_0 = data.get('SOC_0')
+    i_app = data.get('i_app')
+    name = data.get('name')
+
+    if None in {t_tot, dt, Cn, SOC_0, i_app}:
+        return jsonify({"error": "Missing required parameters"}), 400
+
+    try:
+        # Prepare input parameters for calculation
+        calc_parameters = {
+            't_tot': float(t_tot),
+            'dt': float(dt),
+            'OCV_import': np.array([]),
+            'Cn': float(Cn),
+            'SOC_0': float(SOC_0),
+            'i_app': float(i_app),
+        }
+
+        # Run the ECM calculation
+        result = ecm_calculation(calc_parameters)
+
+        # Extract results
+        t_table = result['t_table'].tolist()
+        Vt = result['Vt'].tolist()
+        SOC_store = result['SOC_store'].tolist()
+        OCV_store = result['OCV_store'].tolist()
+
+        # Prepare input and output for storage (convert NumPy arrays to lists)
+        input_data = {
+            't_tot': float(t_tot),
+            'dt': float(dt),
+            'OCV_import': [],
+            'Cn': float(Cn),
+            'SOC_0': float(SOC_0),
+            'i_app': float(i_app),
+        }
+        output_data = {
+            "t_table": t_table,
+            "Vt": Vt,
+            "SOC_store": SOC_store,
+            "OCV_store": OCV_store
+        }
+
+        # Calculate size of the history entry
+        history_size = calculate_history_size(input_data, output_data)
+
+        # Check if user has enough storage space
+        if current_user.storage_used + history_size > current_user.storage_limit:
+            return jsonify({"error": "Storage limit exceeded"}), 400
+
+        # Store the input and output in History
+        user_id = current_user.id
+        default_folder_id = current_user.default_folder_id
+        history_entry = History(
+            user_id=user_id,
+            folder_id=default_folder_id,
+            type='ecm',
+            input=json.dumps(input_data),
+            output=json.dumps(output_data),
+            name=name if name else None,
+            size=history_size
+        )
+        db.session.add(history_entry)
+        
+        # Update user's storage usage
+        current_user.storage_used += history_size
+        db.session.commit()
+
+        # Return the output to the user
+        return jsonify({
+            "t_table": t_table,
+            "Vt": Vt,
+            "SOC_store": SOC_store,
+            "OCV_store": OCV_store
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
