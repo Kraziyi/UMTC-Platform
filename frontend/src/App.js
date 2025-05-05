@@ -19,6 +19,7 @@ import FileUploadPage from './pages/FileUploadPage';
 import FunctionInvoker from './pages/FunctionInvoker';
 import ManageCalculation from './pages/ManageCalculations';
 import ECM from './pages/ECM';
+import ThreeDDemo from './pages/ThreeDDemo';
 
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
         <Route path="/functions/:functionName" element={<FunctionInvoker />} />
         <Route path="/manage-calculation" element={<ManageCalculation />} />
         <Route path="/calculation/ecm" element={<ECM />} />
+        <Route path="/3d-demo" element={<ThreeDDemo />} />
       </Routes>
     </Router>
   );

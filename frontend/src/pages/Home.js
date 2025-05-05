@@ -43,6 +43,12 @@ const Home = () => {
       path: '/calculation/ecm'
     },
     {
+      title: '3D Point Cloud',
+      description: 'Create and visualize 3D point clouds with interactive controls and real-time rendering.',
+      icon: <CalculateIcon sx={{ fontSize: 40, color: '#00274C' }} />,
+      path: '/3d-demo'
+    },
+    {
       title: 'History Management',
       description: 'Access and manage your calculation history, organize results, and track your research progress.',
       icon: <HistoryIcon sx={{ fontSize: 40, color: '#00274C' }} />,

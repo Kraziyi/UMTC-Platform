@@ -7,7 +7,7 @@ import {
   Paper, IconButton, Grid, Card, CardContent,
   CardActions, Alert, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, InputAdornment,
-  Divider
+  Divider, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { ecm, getDefaultFolder } from '../services/api';
@@ -38,6 +38,18 @@ const VisuallyHiddenInput = styled('input')({
   whiteSpace: 'nowrap',
   width: 1,
 });
+
+const InputContainer = styled(Box)(({ theme }) => ({
+  width: '300px',
+  marginRight: theme.spacing(4),
+}));
+
+const DescriptionContainer = styled(Box)(({ theme }) => ({
+  flex: 1,
+  padding: theme.spacing(2),
+  backgroundColor: theme.palette.grey[50],
+  borderRadius: theme.shape.borderRadius,
+}));
 
 const steps = [
   {
@@ -83,7 +95,8 @@ const ECM = () => {
     i_app: '0.3',
     name: '',
     ocv_data: [],
-    ocv_preview: null
+    ocv_preview: null,
+    intepolation_choice: ''
   });
   const [ocvRows, setOcvRows] = useState([{ x: '', y: '' }]);
   const [ocvRowCount, setOcvRowCount] = useState(1);
@@ -95,6 +108,7 @@ const ECM = () => {
   const [showResults, setShowResults] = useState(false);
   const [xDecimalPlaces, setXDecimalPlaces] = useState(2);
   const [yDecimalPlaces, setYDecimalPlaces] = useState(2);
+  const [interpolationMethod, setInterpolationMethod] = useState('');
 
   useEffect(() => {
     const fetchDefaultFolder = async () => {
@@ -168,23 +182,30 @@ const ECM = () => {
     // Update ocv_data and preview
     const validData = newRows.filter(row => row.x !== '' && row.y !== '');
     if (validData.length > 0) {
-      const data = validData.map(row => ({
-        x: parseFloat(row.x),
-        y: parseFloat(row.y)
-      }));
+      // Convert to array of [x, y] pairs
+      const data = validData.map(row => [
+        parseFloat(row.x),
+        parseFloat(row.y)
+      ]);
       
       setInputValues(prev => ({
         ...prev,
         ocv_data: data,
         ocv_preview: {
-          labels: data.map(d => d.x),
+          labels: data.map(d => d[0]),
           datasets: [{
             label: 'OCV Data',
-            data: data.map(d => d.y),
+            data: data.map(d => d[1]),
             borderColor: 'rgb(75, 192, 192)',
             tension: 0.1
           }]
         }
+      }));
+    } else {
+      setInputValues(prev => ({
+        ...prev,
+        ocv_data: [],
+        ocv_preview: null
       }));
     }
   };
@@ -202,19 +223,19 @@ const ECM = () => {
     // Update ocv_data and preview
     const validData = newRows.filter(row => row.x !== '' && row.y !== '');
     if (validData.length > 0) {
-      const data = validData.map(row => ({
-        x: parseFloat(row.x),
-        y: parseFloat(row.y)
-      }));
+      const data = validData.map(row => [
+        parseFloat(row.x),
+        parseFloat(row.y)
+      ]);
       
       setInputValues(prev => ({
         ...prev,
         ocv_data: data,
         ocv_preview: {
-          labels: data.map(d => d.x),
+          labels: data.map(d => d[0]),
           datasets: [{
             label: 'OCV Data',
-            data: data.map(d => d.y),
+            data: data.map(d => d[1]),
             borderColor: 'rgb(75, 192, 192)',
             tension: 0.1
           }]
@@ -259,11 +280,11 @@ const ECM = () => {
               // Filter out empty rows and ensure we have at least 2 columns
               const validData = results.data
                 .filter(row => row.length >= 2 && row[0] !== '' && row[1] !== '')
-                .map(row => ({
-                  x: parseFloat(row[0]),
-                  y: parseFloat(row[1])
-                }))
-                .filter(item => !isNaN(item.x) && !isNaN(item.y)); // Filter out non-numeric values
+                .map(row => [
+                  parseFloat(row[0]),
+                  parseFloat(row[1])
+                ])
+                .filter(item => !isNaN(item[0]) && !isNaN(item[1])); // Filter out non-numeric values
               
               if (validData.length === 0) {
                 setError('No valid data found in the CSV file. Please ensure the file contains numeric values in the first two columns.');
@@ -272,8 +293,8 @@ const ECM = () => {
               
               // Update ocv rows
               const newRows = validData.map(item => ({
-                x: item.x.toString(),
-                y: item.y.toString()
+                x: item[0].toString(),
+                y: item[1].toString()
               }));
               setOcvRows(newRows);
               setOcvRowCount(newRows.length);
@@ -282,10 +303,10 @@ const ECM = () => {
                 ...prev,
                 ocv_data: validData,
                 ocv_preview: {
-                  labels: validData.map(d => d.x),
+                  labels: validData.map(d => d[0]),
                   datasets: [{
                     label: 'OCV Data',
-                    data: validData.map(d => d.y),
+                    data: validData.map(d => d[1]),
                     borderColor: 'rgb(75, 192, 192)',
                     tension: 0.1
                   }]
@@ -301,11 +322,11 @@ const ECM = () => {
           // Filter out empty rows and ensure we have at least 2 columns
           const validData = jsonData
             .filter(row => row.length >= 2 && row[0] !== undefined && row[1] !== undefined)
-            .map(row => ({
-              x: parseFloat(row[0]),
-              y: parseFloat(row[1])
-            }))
-            .filter(item => !isNaN(item.x) && !isNaN(item.y)); // Filter out non-numeric values
+            .map(row => [
+              parseFloat(row[0]),
+              parseFloat(row[1])
+            ])
+            .filter(item => !isNaN(item[0]) && !isNaN(item[1])); // Filter out non-numeric values
           
           if (validData.length === 0) {
             setError('No valid data found in the Excel file. Please ensure the file contains numeric values in the first two columns.');
@@ -314,8 +335,8 @@ const ECM = () => {
           
           // Update ocv rows
           const newRows = validData.map(item => ({
-            x: item.x.toString(),
-            y: item.y.toString()
+            x: item[0].toString(),
+            y: item[1].toString()
           }));
           setOcvRows(newRows);
           setOcvRowCount(newRows.length);
@@ -324,10 +345,10 @@ const ECM = () => {
             ...prev,
             ocv_data: validData,
             ocv_preview: {
-              labels: validData.map(d => d.x),
+              labels: validData.map(d => d[0]),
               datasets: [{
                 label: 'OCV Data',
-                data: validData.map(d => d.y),
+                data: validData.map(d => d[1]),
                 borderColor: 'rgb(75, 192, 192)',
                 tension: 0.1
               }]
@@ -359,7 +380,8 @@ const ECM = () => {
         SOC_0: parseFloat(inputValues.SOC_0),
         i_app: parseFloat(inputValues.i_app),
         name: inputValues.name.trim(),
-        ocv_data: inputValues.ocv_data
+        ocv_data: inputValues.ocv_data,
+        intepolation_choice: interpolationMethod
       };
 
       const response = await ecm(params, defaultFolderId);
@@ -381,326 +403,223 @@ const ECM = () => {
     switch (step) {
       case 0:
         return (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              {steps[0].description}
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Total Time (s)"
-                  value={inputValues.t_tot}
-                  onChange={handleInputChange('t_tot')}
-                  fullWidth
-                  required
-                  type="number"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Time Step (s)"
-                  value={inputValues.dt}
-                  onChange={handleInputChange('dt')}
-                  fullWidth
-                  required
-                  type="number"
-                />
-              </Grid>
-            </Grid>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <InputContainer>
+              <TextField
+                label="Total Time (s)"
+                value={inputValues.t_tot}
+                onChange={handleInputChange('t_tot')}
+                fullWidth
+                size="small"
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                label="Time Step (s)"
+                value={inputValues.dt}
+                onChange={handleInputChange('dt')}
+                fullWidth
+                size="small"
+              />
+            </InputContainer>
+            <DescriptionContainer>
+              <Typography variant="body1" paragraph>
+                {steps[0].description}
+              </Typography>
+              <Box
+                component="img"
+                src="/images/description1.jpg"
+                alt="Step 1 Description"
+                sx={{ maxWidth: '100%', height: 'auto', borderRadius: 1 }}
+              />
+            </DescriptionContainer>
           </Box>
         );
       case 1:
         return (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              {steps[1].description}
-            </Typography>
-            <TextField
-              label="Capacity (Ah)"
-              value={inputValues.Cn}
-              onChange={handleInputChange('Cn')}
-              fullWidth
-              required
-              type="number"
-            />
+          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <InputContainer>
+              <TextField
+                label="Capacity (Ah)"
+                value={inputValues.Cn}
+                onChange={handleInputChange('Cn')}
+                fullWidth
+                size="small"
+              />
+            </InputContainer>
+            <DescriptionContainer>
+              <Typography variant="body1" paragraph>
+                {steps[1].description}
+              </Typography>
+              <Box
+                component="img"
+                src="/images/description2.jpg"
+                alt="Step 2 Description"
+                sx={{ maxWidth: '100%', height: 'auto', borderRadius: 1 }}
+              />
+            </DescriptionContainer>
           </Box>
         );
       case 2:
         return (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              {steps[2].description}
-            </Typography>
-            <TextField
-              label="Initial SOC"
-              value={inputValues.SOC_0}
-              onChange={handleInputChange('SOC_0')}
-              fullWidth
-              required
-              type="number"
-            />
+          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <InputContainer>
+              <TextField
+                label="Initial SOC"
+                value={inputValues.SOC_0}
+                onChange={handleInputChange('SOC_0')}
+                fullWidth
+                size="small"
+              />
+            </InputContainer>
+            <DescriptionContainer>
+              <Typography variant="body1">
+                {steps[2].description}
+              </Typography>
+            </DescriptionContainer>
           </Box>
         );
       case 3:
         return (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              {steps[3].description}
-            </Typography>
-            <TextField
-              label="Applied Current (A)"
-              value={inputValues.i_app}
-              onChange={handleInputChange('i_app')}
-              fullWidth
-              required
-              type="number"
-            />
+          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <InputContainer>
+              <TextField
+                label="Applied Current (A)"
+                value={inputValues.i_app}
+                onChange={handleInputChange('i_app')}
+                fullWidth
+                size="small"
+              />
+            </InputContainer>
+            <DescriptionContainer>
+              <Typography variant="body1">
+                {steps[3].description}
+              </Typography>
+            </DescriptionContainer>
           </Box>
         );
       case 4:
         return (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              {steps[4].description}
-            </Typography>
-            
-            <Box sx={{ mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <InputContainer>
               <Button
-                component="label"
                 variant="contained"
+                component="label"
                 startIcon={<UploadFileIcon />}
-                sx={{ mr: 2 }}
+                sx={{ mb: 2 }}
               >
                 Upload OCV Data
                 <VisuallyHiddenInput type="file" accept=".csv,.xlsx" onChange={handleFileUpload} />
               </Button>
               
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Interpolation Method</InputLabel>
+                <Select
+                  value={interpolationMethod}
+                  onChange={(e) => setInterpolationMethod(e.target.value)}
+                  label="Interpolation Method"
+                >
+                  <MenuItem value="">None</MenuItem>
+                  <MenuItem value="linear">Linear</MenuItem>
+                  <MenuItem value="cubic">Cubic</MenuItem>
+                  <MenuItem value="nearest">Nearest</MenuItem>
+                </Select>
+              </FormControl>
+
               <TextField
                 label="Number of OCV Points"
                 type="number"
                 value={ocvRowCount}
                 onChange={handleOcvRowCountChange}
+                fullWidth
+                size="small"
                 InputProps={{
                   inputProps: { min: 1 }
                 }}
-                sx={{ width: 200 }}
+                sx={{ mb: 2 }}
               />
-            </Box>
-            
-            <TableContainer component={Paper} sx={{ mb: 2 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>X Value</TableCell>
-                    <TableCell>Y Value</TableCell>
-                    <TableCell align="center">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {ocvRows.map((row, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <TextField
-                          size="small"
-                          value={row.x}
-                          onChange={(e) => handleOcvRowChange(index, 'x', e.target.value)}
-                          type="number"
-                          fullWidth
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          size="small"
-                          value={row.y}
-                          onChange={(e) => handleOcvRowChange(index, 'y', e.target.value)}
-                          type="number"
-                          fullWidth
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handleRemoveOcvRow(index)}
-                          disabled={ocvRows.length === 1}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
+
+              <TableContainer component={Paper}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>X (SOC)</TableCell>
+                      <TableCell>Y (Voltage)</TableCell>
+                      <TableCell align="right">Actions</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            
-            <Button
-              variant="outlined"
-              startIcon={<AddIcon />}
-              onClick={handleAddOcvRow}
-              sx={{ mb: 2 }}
-            >
-              Add Row
-            </Button>
-            
-            {inputValues.ocv_preview && (
-              <Box sx={{ mt: 2, height: 300 }}>
-                <Typography variant="subtitle1" gutterBottom>
-                  OCV Data Preview
-                </Typography>
-                <Line data={inputValues.ocv_preview} options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    x: {
-                      title: {
-                        display: true,
-                        text: 'X'
-                      }
-                    },
-                    y: {
-                      title: {
-                        display: true,
-                        text: 'Y'
-                      }
-                    }
-                  }
-                }} />
-              </Box>
-            )}
+                  </TableHead>
+                  <TableBody>
+                    {ocvRows.map((row, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <TextField
+                            size="small"
+                            value={row.x}
+                            onChange={(e) => handleOcvRowChange(index, 'x', e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            size="small"
+                            value={row.y}
+                            onChange={(e) => handleOcvRowChange(index, 'y', e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveOcvRow(index)}
+                            disabled={ocvRows.length === 1}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={handleAddOcvRow}
+                sx={{ mt: 2 }}
+              >
+                Add Row
+              </Button>
+            </InputContainer>
+            <DescriptionContainer>
+              <Typography variant="body1">
+                {steps[4].description}
+              </Typography>
+              {inputValues.ocv_preview && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    OCV Data Preview
+                  </Typography>
+                  <Line data={inputValues.ocv_preview} />
+                </Box>
+              )}
+            </DescriptionContainer>
           </Box>
         );
       case 5:
         return (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              {steps[5].description}
-            </Typography>
-            
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Calculation Name"
-                  value={inputValues.name}
-                  onChange={handleInputChange('name')}
-                  fullWidth
-                  placeholder="Enter a name for this calculation"
-                  sx={{ mb: 2 }}
-                />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle1">
-                    Total Time: {inputValues.t_tot} s
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setActiveStep(0)}
-                    startIcon={<EditIcon />}
-                  >
-                    Edit
-                  </Button>
-                </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle1">
-                    Time Step: {inputValues.dt} s
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setActiveStep(0)}
-                    startIcon={<EditIcon />}
-                  >
-                    Edit
-                  </Button>
-                </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle1">
-                    Capacity: {inputValues.Cn} Ah
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setActiveStep(1)}
-                    startIcon={<EditIcon />}
-                  >
-                    Edit
-                  </Button>
-                </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle1">
-                    Initial SOC: {inputValues.SOC_0}
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setActiveStep(2)}
-                    startIcon={<EditIcon />}
-                  >
-                    Edit
-                  </Button>
-                </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle1">
-                    Applied Current: {inputValues.i_app} A
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setActiveStep(3)}
-                    startIcon={<EditIcon />}
-                  >
-                    Edit
-                  </Button>
-                </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle1">
-                    OCV Data Points: {inputValues.ocv_data.length}
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setActiveStep(4)}
-                    startIcon={<EditIcon />}
-                  >
-                    Edit
-                  </Button>
-                </Box>
-              </Grid>
-              
-              {inputValues.ocv_preview && (
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    OCV Data Preview
-                  </Typography>
-                  <Box sx={{ height: 300 }}>
-                    <Line data={inputValues.ocv_preview} options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      scales: {
-                        x: {
-                          title: {
-                            display: true,
-                            text: 'X'
-                          }
-                        },
-                        y: {
-                          title: {
-                            display: true,
-                            text: 'Y'
-                          }
-                        }
-                      }
-                    }} />
-                  </Box>
-                </Grid>
-              )}
-            </Grid>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <InputContainer>
+              <TextField
+                label="Calculation Name"
+                value={inputValues.name}
+                onChange={handleInputChange('name')}
+                fullWidth
+                size="small"
+              />
+            </InputContainer>
+            <DescriptionContainer>
+              <Typography variant="body1">
+                {steps[5].description}
+              </Typography>
+            </DescriptionContainer>
           </Box>
         );
       default:
@@ -886,7 +805,8 @@ const ECM = () => {
                 i_app: '0.3',
                 name: '',
                 ocv_data: [],
-                ocv_preview: null
+                ocv_preview: null,
+                intepolation_choice: ''
               });
               setOcvRows([{ x: '', y: '' }]);
               setOcvRowCount(1);
