@@ -9,9 +9,11 @@ import numpy as np
 from app import db
 from app.models import History
 from app.utils import diffusion_solver, dynamic_router, diffusion_2d_solver, calculate_temperature_influence, diffusion_2d_solver_alt
+from app.utils.intepolation import intepolation_cubic, intepolation_linear, intepolation_nearest
 from app.utils.decorators import admin_required
 from app.utils.history import calculate_history_size
 from app.utils.compiled import ecm_calculation
+from app.utils.ecm import ecm_interp_solution
 
 calculation = Blueprint('calculation', __name__)
 
@@ -307,23 +309,59 @@ def ecm():
     SOC_0 = data.get('SOC_0')
     i_app = data.get('i_app')
     name = data.get('name')
+    ocv_data = data.get('ocv_data', None)
+    intepolation_choice = data.get('intepolation_choice', None)
 
     if None in {t_tot, dt, Cn, SOC_0, i_app}:
         return jsonify({"error": "Missing required parameters"}), 400
 
     try:
-        # Prepare input parameters for calculation
-        calc_parameters = {
-            't_tot': float(t_tot),
-            'dt': float(dt),
-            'OCV_import': np.array([]),
-            'Cn': float(Cn),
-            'SOC_0': float(SOC_0),
-            'i_app': float(i_app),
-        }
+        # Process OCV data
+        if ocv_data is not None:
+            try:
+                # Convert object array to numpy array
+                if isinstance(ocv_data, list) and all(isinstance(item, dict) for item in ocv_data):
+                    # Convert from [{'x': x1, 'y': y1}, ...] to [[x1, y1], ...]
+                    ocv_data = np.array([[item['x'], item['y']] for item in ocv_data])
+                else:
+                    # Handle other formats
+                    ocv_data = np.array(ocv_data)
+                
+                # Ensure it's a 2D array with 2 columns
+                if ocv_data.ndim == 1:
+                    ocv_data = ocv_data.reshape(-1, 1)
+                elif ocv_data.ndim == 2 and ocv_data.shape[1] != 2:
+                    return jsonify({"error": "OCV data must have exactly 2 columns (x and y values)"}), 400
+                
+                # Sort by x values
+                ocv_data = ocv_data[ocv_data[:, 0].argsort()]
+                
+            except Exception as e:
+                return jsonify({"error": f"Invalid OCV data format: {str(e)}"}), 400
 
-        # Run the ECM calculation
-        result = ecm_calculation(calc_parameters)
+        if intepolation_choice not in ['linear', 'cubic', 'nearest']:
+            # Prepare input parameters for calculation
+            calc_parameters = {
+                't_tot': float(t_tot),
+                'dt': float(dt),
+                'OCV_import': ocv_data if ocv_data is not None else np.array([]),
+                'Cn': float(Cn),
+                'SOC_0': float(SOC_0),
+                'i_app': float(i_app),
+            }
+
+            # Run the ECM calculation
+            result = ecm_calculation(calc_parameters)
+        else:
+            result = ecm_interp_solution(
+                t_tot=float(t_tot),
+                dt=float(dt),
+                Cn=float(Cn),
+                SOC_0=float(SOC_0),
+                i_app=float(i_app),
+                intepolation_choice=intepolation_choice,
+                OCV_import=ocv_data if ocv_data is not None else np.array([])
+            )
 
         # Extract results
         t_table = result['t_table'].tolist()
@@ -331,14 +369,15 @@ def ecm():
         SOC_store = result['SOC_store'].tolist()
         OCV_store = result['OCV_store'].tolist()
 
-        # Prepare input and output for storage (convert NumPy arrays to lists)
+        # Prepare input and output for storage
         input_data = {
             't_tot': float(t_tot),
             'dt': float(dt),
-            'OCV_import': [],
+            'OCV_import': ocv_data.tolist() if ocv_data is not None else [],
             'Cn': float(Cn),
             'SOC_0': float(SOC_0),
             'i_app': float(i_app),
+            'intepolation_choice': intepolation_choice
         }
         output_data = {
             "t_table": t_table,
