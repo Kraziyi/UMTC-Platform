@@ -9,8 +9,9 @@ import Layout from '../components/Layout';
 import CustomButton from '../components/CustomButton';
 import { CategoryScale, LinearScale, LineElement, 
         PointElement, LineController, Chart } from 'chart.js';
+import zoomPlugin from 'chartjs-plugin-zoom';
 
-Chart.register(CategoryScale, LinearScale, LineElement,PointElement, LineController);
+Chart.register(CategoryScale, LinearScale, LineElement,PointElement, LineController, zoomPlugin);
 
 const Diffusion = () => {
   const navigate = useNavigate();
@@ -193,6 +194,29 @@ const Diffusion = () => {
         },
         ticks: {
           callback: (value) => Number(value).toExponential(yDecimalPlaces),
+        }
+      }
+    },
+    plugins: {
+      zoom: {
+        pan: {
+          enabled: true,
+          mode: 'xy',
+          modifierKey: 'shift'
+        },
+        zoom: {
+          wheel: {
+            enabled: true,
+            modifierKey: 'ctrl'
+          },
+          pinch: {
+            enabled: true
+          },
+          mode: 'xy',
+          drag: {
+            enabled: true,
+            backgroundColor: 'rgba(0,0,0,0.1)'
+          }
         }
       }
     }

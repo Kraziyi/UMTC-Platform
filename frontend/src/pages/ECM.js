@@ -24,8 +24,10 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
+import zoomPlugin from 'chartjs-plugin-zoom';
+Chart.register(zoomPlugin);
 
-Chart.register(CategoryScale, LinearScale, LineElement, PointElement, LineController);
+Chart.register(CategoryScale, LinearScale, LineElement, PointElement, LineController, zoomPlugin);
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -686,6 +688,29 @@ const ECM = () => {
             callback: (value) => formatNumber(value, yDecimalPlaces)
           }
         }
+      },
+      plugins: {
+        zoom: {
+          pan: {
+            enabled: true,
+            mode: 'xy',
+            modifierKey: 'shift'
+          },
+          zoom: {
+            wheel: {
+              enabled: true,
+              modifierKey: 'ctrl'
+            },
+            pinch: {
+              enabled: true
+            },
+            mode: 'xy',
+            drag: {
+              enabled: true,
+              backgroundColor: 'rgba(0,0,0,0.1)'
+            }
+          }
+        }
       }
     };
 
@@ -703,19 +728,7 @@ const ECM = () => {
                 Voltage vs Time
               </Typography>
               <Box sx={{ height: 300 }}>
-                <Line data={voltageData} options={{
-                  ...chartOptions,
-                  scales: {
-                    ...chartOptions.scales,
-                    y: {
-                      ...chartOptions.scales.y,
-                      title: {
-                        display: true,
-                        text: 'Voltage (V)'
-                      }
-                    }
-                  }
-                }} />
+                <Line data={voltageData} options={chartOptions} />
               </Box>
             </Paper>
           </Grid>
@@ -726,19 +739,7 @@ const ECM = () => {
                 State of Charge vs Time
               </Typography>
               <Box sx={{ height: 300 }}>
-                <Line data={socData} options={{
-                  ...chartOptions,
-                  scales: {
-                    ...chartOptions.scales,
-                    y: {
-                      ...chartOptions.scales.y,
-                      title: {
-                        display: true,
-                        text: 'State of Charge'
-                      }
-                    }
-                  }
-                }} />
+                <Line data={socData} options={chartOptions} />
               </Box>
             </Paper>
           </Grid>
