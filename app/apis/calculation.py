@@ -9,7 +9,6 @@ import numpy as np
 from app import db
 from app.models import History
 from app.utils import diffusion_solver, dynamic_router, diffusion_2d_solver, calculate_temperature_influence, diffusion_2d_solver_alt
-from app.utils.intepolation import intepolation_cubic, intepolation_linear, intepolation_nearest
 from app.utils.decorators import admin_required
 from app.utils.history import calculate_history_size
 from app.utils.compiled import ecm_calculation
