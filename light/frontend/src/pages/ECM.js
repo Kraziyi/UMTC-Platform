@@ -87,6 +87,7 @@ const steps = [
 const ECM = () => {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
+  const [calculationChain, setCalculationChain] = useState(0);
   const [inputValues, setInputValues] = useState({
     t_tot: '200',
     dt: '0.1',
@@ -380,6 +381,34 @@ const ECM = () => {
   const sanitizeDecimalPlaces = (value) => {
     let num = parseInt(value, 10);
     return isNaN(num) ? 2 : Math.max(0, Math.min(num, 10));
+  };
+
+  const handleContinueCalculation = () => {
+    if (!results) return;
+
+    // Calculate the next current direction based on chain count
+    const nextCurrentDirection = calculationChain % 2 === 0 ? -1 : 1;
+    const nextCurrent = Math.abs(parseFloat(inputValues.i_app)) * nextCurrentDirection;
+
+    // Set new input values based on previous results
+    setInputValues(prev => ({
+      ...prev,
+      t_tot: prev.t_tot,
+      dt: prev.dt,
+      Cn: prev.Cn,
+      SOC_0: results.SOC_store[results.SOC_store.length - 1].toString(),
+      i_app: nextCurrent.toString(),
+      ocv_data: prev.ocv_data,
+      ocv_preview: prev.ocv_preview,
+      intepolation_choice: prev.intepolation_choice
+    }));
+
+    // Increment chain counter
+    setCalculationChain(prev => prev + 1);
+    
+    // Reset to overview step
+    setShowResults(false);
+    setActiveStep(5);
   };
 
   const renderStepContent = (step) => {
@@ -850,19 +879,26 @@ const ECM = () => {
           </Grid>
         </Grid>
         
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
           <Button 
             variant="contained" 
             onClick={() => setShowResults(false)}
-            sx={{ mr: 2 }}
           >
             Back to Overview
+          </Button>
+          <Button 
+            variant="contained"
+            color="secondary"
+            onClick={handleContinueCalculation}
+          >
+            Continue Calculation
           </Button>
           <Button 
             variant="outlined" 
             onClick={() => {
               setShowResults(false);
               setActiveStep(0);
+              setCalculationChain(0);
               setInputValues({
                 t_tot: '200',
                 dt: '0.1',

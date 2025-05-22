@@ -3,23 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
 import { 
   TextField, CircularProgress, Typography, Box, 
-  Button, Stepper, Step, StepLabel, StepContent,
+  Button, Stepper, Step, StepLabel,
   Paper, IconButton, Grid, Card, CardContent,
-  CardActions, Alert, Table, TableBody, TableCell, 
-  TableContainer, TableHead, TableRow, InputAdornment,
+  Alert, Table, TableBody, TableCell, 
+  TableContainer, TableHead, TableRow,
   Divider, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { ecm, getDefaultFolder } from '../services/api';
 import Layout from '../components/Layout';
-import CustomButton from '../components/CustomButton';
 import { CategoryScale, LinearScale, LineElement, 
         PointElement, LineController, Chart } from 'chart.js';
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import PreviewIcon from '@mui/icons-material/Preview';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import * as XLSX from 'xlsx';
@@ -89,6 +87,7 @@ const steps = [
 const ECM = () => {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
+  const [calculationChain, setCalculationChain] = useState(0);
   const [inputValues, setInputValues] = useState({
     t_tot: '200',
     dt: '0.1',
@@ -401,6 +400,34 @@ const ECM = () => {
     return isNaN(num) ? 2 : Math.max(0, Math.min(num, 10));
   };
 
+  const handleContinueCalculation = () => {
+    if (!results) return;
+
+    // Calculate the next current direction based on chain count
+    const nextCurrentDirection = calculationChain % 2 === 0 ? -1 : 1;
+    const nextCurrent = Math.abs(parseFloat(inputValues.i_app)) * nextCurrentDirection;
+
+    // Set new input values based on previous results
+    setInputValues(prev => ({
+      ...prev,
+      t_tot: prev.t_tot,
+      dt: prev.dt,
+      Cn: prev.Cn,
+      SOC_0: results.SOC_store[results.SOC_store.length - 1].toString(),
+      i_app: nextCurrent.toString(),
+      ocv_data: prev.ocv_data,
+      ocv_preview: prev.ocv_preview,
+      intepolation_choice: prev.intepolation_choice
+    }));
+
+    // Increment chain counter
+    setCalculationChain(prev => prev + 1);
+    
+    // Reset to overview step
+    setShowResults(false);
+    setActiveStep(5);
+  };
+
   const renderStepContent = (step) => {
     switch (step) {
       case 0:
@@ -607,7 +634,7 @@ const ECM = () => {
         );
       case 5:
         return (
-          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <InputContainer>
               <TextField
                 label="Calculation Name"
@@ -615,12 +642,108 @@ const ECM = () => {
                 onChange={handleInputChange('name')}
                 fullWidth
                 size="small"
+                sx={{ mb: 3 }}
               />
             </InputContainer>
+
+            <Grid container spacing={3}>
+              {/* Time Parameters */}
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Time Parameters
+                    </Typography>
+                    <Typography variant="body2">
+                      Total Time: {inputValues.t_tot} s
+                    </Typography>
+                    <Typography variant="body2">
+                      Time Step: {inputValues.dt} s
+                    </Typography>
+                    <Button
+                      size="small"
+                      startIcon={<EditIcon />}
+                      onClick={() => setActiveStep(0)}
+                      sx={{ mt: 1 }}
+                    >
+                      Modify
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Battery Parameters */}
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Battery Parameters
+                    </Typography>
+                    <Typography variant="body2">
+                      Capacity: {inputValues.Cn} Ah
+                    </Typography>
+                    <Typography variant="body2">
+                      Initial SOC: {inputValues.SOC_0}
+                    </Typography>
+                    <Typography variant="body2">
+                      Applied Current: {inputValues.i_app} A
+                    </Typography>
+                    <Button
+                      size="small"
+                      startIcon={<EditIcon />}
+                      onClick={() => setActiveStep(1)}
+                      sx={{ mt: 1 }}
+                    >
+                      Modify
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* OCV Data */}
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      OCV Data
+                    </Typography>
+                    {inputValues.ocv_data.length > 0 ? (
+                      <>
+                        <Typography variant="body2" gutterBottom>
+                          Number of Points: {inputValues.ocv_data.length}
+                        </Typography>
+                        <Typography variant="body2" gutterBottom>
+                          Interpolation Method: {interpolationMethod || 'None'}
+                        </Typography>
+                        <Box sx={{ height: 200, mt: 2 }}>
+                          <Line data={inputValues.ocv_preview} />
+                        </Box>
+                      </>
+                    ) : (
+                      <Typography variant="body2" color="error">
+                        No OCV data provided
+                      </Typography>
+                    )}
+                    <Button
+                      size="small"
+                      startIcon={<EditIcon />}
+                      onClick={() => setActiveStep(4)}
+                      sx={{ mt: 1 }}
+                    >
+                      Modify
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+
             <DescriptionContainer>
               <Typography variant="body1">
                 {steps[5].description}
               </Typography>
+              <Alert severity="info" sx={{ mt: 2 }}>
+                Please review all parameters before running the simulation. You can modify any parameter by clicking the "Modify" button in each section.
+              </Alert>
             </DescriptionContainer>
           </Box>
         );
@@ -785,19 +908,26 @@ const ECM = () => {
           </Grid>
         </Grid>
         
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
           <Button 
             variant="contained" 
             onClick={() => setShowResults(false)}
-            sx={{ mr: 2 }}
           >
             Back to Overview
+          </Button>
+          <Button 
+            variant="contained"
+            color="secondary"
+            onClick={handleContinueCalculation}
+          >
+            Continue Calculation
           </Button>
           <Button 
             variant="outlined" 
             onClick={() => {
               setShowResults(false);
               setActiveStep(0);
+              setCalculationChain(0);
               setInputValues({
                 t_tot: '200',
                 dt: '0.1',
