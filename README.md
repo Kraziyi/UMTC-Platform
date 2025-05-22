@@ -1,153 +1,89 @@
-# UMTC Platform Documentation
+# UMTC Platform
 
-## Table of Contents
-1. [Installation Guide](#installation-guide)
-   - [Windows Installation](#windows-installation)
-   - [Linux Installation](#linux-installation)
-2. [Development Guide](#development-guide)
-   - [Project Structure](#project-structure)
-   - [Backend Architecture](#backend-architecture)
-   - [Frontend Architecture](#frontend-architecture)
-   - [API Documentation](#api-documentation)
+A web-based platform for battery modeling and simulation, available in two versions:
+- Full version: Complete platform with database support
+- Lightweight version: Simplified version without database dependencies
+
+## Project Structure
+
+```
+UMTC-Platform/
+├── app/                    # Flask backend application
+│   ├── apis/              # API endpoints
+│   ├── models/            # Database models
+│   └── utils/             # Utility functions
+├── frontend/              # React frontend
+│   ├── src/
+│   │   ├── components/    # Reusable components
+│   │   ├── pages/        # Page components
+│   │   └── services/     # API services
+├── migrations/            # Alembic database migrations
+├── manage.py             # Flask application entry point
+│
+└── light/                # Lightweight version
+    ├── app/              # Flask backend (no database)
+    └── frontend/         # React frontend (no database features)
+```
 
 ## Installation Guide
 
-### Windows Installation
+### Prerequisites
 
-#### Prerequisites
-- Windows 10+ or later
 - Python 3.9+
-- Git
 - Node.js (v16 or higher)
-- PostgreSQL
+- Git
+- PostgreSQL (for full version only)
 
-#### Installation Steps
+### Full Version Installation
 
-1. **Install Required Tools**
-   - [Git](https://git-scm.com/downloads/win)
-   - [Python](https://www.python.org/downloads/windows/)
-   - [Node.js](https://nodejs.org/)
-   - [PostgreSQL](https://www.postgresql.org/download/windows/)
-
-2. **Clone the Repository**
+1. **Clone the Repository**
    ```bash
    git clone https://github.com/Kraziyi/UMTC-Platform.git
    cd UMTC-Platform
    ```
 
-3. **Backend Setup**
+2. **Backend Setup**
    ```bash
    # Create and activate virtual environment
    python -m venv venv
+   
+   # On Windows
    venv\Scripts\activate
-
-   # Install dependencies
-   pip install -r requirements.txt
-   ```
-
-4. **Database Setup**
-   ```bash
-   # Create database and user
-   psql -U postgres
-   CREATE DATABASE umtc;
-   CREATE USER umtc_user WITH PASSWORD 'your_password';
-   GRANT ALL PRIVILEGES ON DATABASE umtc TO umtc_user;
-   ```
-
-5. **Environment Configuration**
-   Create a `.env` file in the project root:
-   ```env
-   DATABASE_URI=postgresql://umtc_user:your_password@localhost:5432/umtc
-   SECRET_KEY=your_secret_key
-   FLASK_ENV=development
-   FRONTEND_URL=http://localhost:3000
-   MAIL_USERNAME=your_email@gmail.com
-   MAIL_SERVER=smtp.gmail.com
-   MAIL_PORT=587
-   MAIL_DEFAULT_SENDER=no-reply@gmail.com
-   MAIL_PASSWORD=your_password
-   ```
-
-6. **Run Migrations**
-   ```bash
-   flask db upgrade
-   ```
-
-7. **Start the Backend**
-   ```bash
-   python manage.py runserver
-   ```
-
-8. **Frontend Setup**
-   ```bash
-   cd frontend
-   npm install
-   npm start
-   ```
-
-### Linux Installation
-
-#### Prerequisites
-- Ubuntu 20.04+ or similar Linux distribution
-- Python 3.9+
-- Git
-- Node.js (v16 or higher)
-- PostgreSQL
-
-#### Installation Steps
-
-1. **Install Required Tools**
-   ```bash
-   # Update package lists
-   sudo apt update
-
-   # Install Python and pip
-   sudo apt install python3 python3-pip python3-venv
-
-   # Install Node.js
-   curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-   sudo apt install -y nodejs
-
-   # Install PostgreSQL
-   sudo apt install postgresql postgresql-contrib
-   ```
-
-2. **Clone the Repository**
-   ```bash
-   git clone https://github.com/Kraziyi/UMTC-Platform.git
-   cd UMTC-Platform
-   ```
-
-3. **Backend Setup**
-   ```bash
-   # Create and activate virtual environment
-   python3 -m venv venv
+   # On Linux/Mac
    source venv/bin/activate
 
    # Install dependencies
    pip install -r requirements.txt
    ```
 
-4. **Database Setup**
-   ```bash
-   # Switch to postgres user
-   sudo -i -u postgres
+3. **Database Setup**
+   If you just want to use ligt version, skip all database steps.
 
+   ```bash
    # Create database and user
-   psql
+   psql -U postgres
    CREATE DATABASE umtc;
    CREATE USER umtc_user WITH PASSWORD 'your_password';
    GRANT ALL PRIVILEGES ON DATABASE umtc TO umtc_user;
    \q
-   exit
    ```
 
-5. **Environment Configuration**
-   Create a `.env` file in the project root (same as Windows configuration)
+4. **Environment Configuration**
+   Create a `.env` file in the project root:
+   ```env
+   DATABASE_URI=postgresql://umtc_user:your_password@localhost:5432/umtc
+   SECRET_KEY=your_secret_key
+   FLASK_ENV=development
+   FRONTEND_URL=http://localhost:3000
+   ```
 
-6. **Run Migrations and Start Services**
+5. **Initialize Database**
    ```bash
    flask db upgrade
+   ```
+
+6. **Start Backend Server**
+   ```bash
    python manage.py runserver
    ```
 
@@ -158,150 +94,133 @@
    npm start
    ```
 
-## Development Guide
+### Lightweight Version Installation
 
-### Project Structure
+1. **Navigate to Lightweight Directory**
+   ```bash
+   cd light
+   ```
 
-```
-UMTC-Platform/
-├── app/                    # Backend Flask application
-│   ├── apis/              # API endpoints
-│   │   ├── admin.py       # Admin-related APIs
-│   │   ├── calculation.py # Calculation APIs
-│   │   ├── history.py     # History management APIs
-│   │   ├── upload.py      # File upload APIs
-│   │   └── user.py        # User management APIs
-│   ├── models/            # Database models
-│   │   ├── folder.py      # Folder model
-│   │   ├── history.py     # History model
-│   │   └── user.py        # User model
-│   └── utils/             # Utility functions
-├── frontend/              # React frontend
-│   ├── src/
-│   │   ├── components/    # Reusable components
-│   │   ├── pages/        # Page components
-│   │   ├── services/     # API services
-│   │   └── App.js        # Main application
-└── docs/                  # Documentation
-```
+2. **Backend Setup**
+   ```bash
+   # Create and activate virtual environment
+   python -m venv venv
+   
+   # On Windows
+   venv\Scripts\activate
+   # On Linux/Mac
+   source venv/bin/activate
 
-### Backend Architecture
+   # Install dependencies
+   pip install -r requirements.txt
+   ```
 
-The backend is built using Flask and follows a modular structure:
+3. **Start Backend Server**
+   ```bash
+   python manage.py runserver
+   ```
 
-1. **Models**
-   - `User`: Handles user authentication and profile management
-   - `History`: Manages calculation history and results
-   - `Folder`: Organizes calculations into folders
+4. **Frontend Setup**
+   ```bash
+   cd frontend
+   npm install
+   npm start
+   ```
 
-2. **APIs**
-   - User Management (`/api/user/*`)
-   - Calculation Services (`/api/calculation/*`)
-   - History Management (`/api/history/*`)
-   - File Upload (`/api/upload/*`)
-   - Admin Functions (`/api/admin/*`)
+## Running the Application
 
-3. **Authentication**
-   - JWT-based authentication
-   - Role-based access control (Admin/User)
+### Full Version
+1. Start the backend server:
+   ```bash
+   # From project root
+   python manage.py runserver
+   ```
+   The server will run on http://localhost:5001
 
-### Frontend Architecture
+2. Start the frontend development server:
+   ```bash
+   # From frontend directory
+   npm start
+   ```
+   The frontend will run on http://localhost:3000
 
-The frontend is built using React and follows a component-based architecture:
+### Lightweight Version
+1. Start the backend server:
+   ```bash
+   # From light directory
+   python manage.py runserver
+   ```
+   The server will run on http://localhost:5001
 
-1. **Pages**
-   - Authentication (Login, Register)
-   - User Management
-   - Calculation Interface
-   - History Management
-   - File Upload
-   - Admin Dashboard
+2. Start the frontend development server:
+   ```bash
+   # From light/frontend directory
+   npm start
+   ```
+   The frontend will run on http://localhost:3000
 
-2. **Services**
-   - API integration
-   - Authentication handling
-   - State management
+## Features
 
-3. **Components**
-   - Reusable UI components
-   - Form components
-   - Navigation components
+### Full Version
+- User authentication and management
+- Database storage for calculations and results
+- History tracking
+- File upload and management
+- Advanced calculation features
 
-### API Documentation
+### Lightweight Version
+- Basic calculation features
+- No database dependencies
+- Simplified user interface
+- Local storage for results
+- No user authentication required
 
-#### User Management
-- `POST /api/user/login` - User login
-- `POST /api/user/register` - User registration
-- `GET /api/user/info/current` - Get current user info
-- `POST /api/user/subscription` - Manage subscriptions
+## Development
 
-#### Calculation Services
-- `POST /api/calculation/diffusion` - Run diffusion calculation
-- `POST /api/calculation/diffusion_2d` - Run 2D diffusion calculation
-- `POST /api/calculation/ecm` - Run ECM calculation
-- `POST /api/calculation/uploaded` - Upload custom calculation functions
+### Backend Development
+- Flask-based REST API
+- SQLAlchemy ORM for database operations
+- Alembic for database migrations
+- JWT authentication
 
-#### History Management
-- `GET /api/history/folders` - Get folders
-- `POST /api/history/folders` - Create folder
-- `GET /api/history` - Get calculation history
-- `DELETE /api/history/{id}` - Delete history item
+### Frontend Development
+- React-based single page application
+- Material-UI components
+- Axios for API communication
+- React Router for navigation
 
-#### File Management
-- `POST /api/upload` - Upload files
-- `GET /api/calculation/uploaded` - Get uploaded functions
-- `PUT /api/calculation/uploaded/visibility` - Update function visibility
+## Troubleshooting
 
-### Development Workflow
+### Common Issues
 
-1. **Setting Up Development Environment**
-   - Follow installation guide
-   - Create feature branch
-   - Install development dependencies
+1. **Database Connection Error**
+   - Verify PostgreSQL is running
+   - Check database credentials in .env file
+   - Ensure database and user exist
 
-2. **Making Changes**
-   - Backend changes:
-     - Update models if needed
-     - Add/update API endpoints
-     - Create/update database migrations
-   - Frontend changes:
-     - Add/update components
-     - Update API services
-     - Add/update pages
+2. **Port Already in Use**
+   - Check if another instance is running
+   - Change port in configuration
+   - Kill process using the port
 
-3. **Testing**
-   - Run backend tests
-   - Test frontend components
-   - Verify API endpoints
-   - Check database migrations
+3. **Node Modules Issues**
+   - Delete node_modules folder
+   - Clear npm cache: `npm cache clean --force`
+   - Reinstall: `npm install`
 
-4. **Deployment**
-   - Update version numbers
-   - Run migrations
-   - Build frontend
-   - Deploy to production
+4. **Python Virtual Environment Issues**
+   - Ensure correct Python version
+   - Recreate virtual environment
+   - Verify all dependencies are installed
 
-### Best Practices
+## Contributing
 
-1. **Code Style**
-   - Follow PEP 8 for Python
-   - Use ESLint for JavaScript
-   - Write meaningful commit messages
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-2. **Security**
-   - Never commit sensitive data
-   - Use environment variables
-   - Implement proper authentication
-   - Validate all inputs
+## License
 
-3. **Performance**
-   - Optimize database queries
-   - Use proper indexing
-   - Implement caching where needed
-   - Minimize API calls
-
-4. **Documentation**
-   - Update API documentation
-   - Add code comments
-   - Keep README up to date
-   - Document database changes 
+This project is licensed under the MIT License - see the LICENSE file for details. 
